@@ -1,0 +1,547 @@
+#!/bin/bash
+#═══════════════════════════════════════════════════════════════════════════════
+#  DEGENI - Claude + Gemini AI Manager | by BITZY.ID
+#═══════════════════════════════════════════════════════════════════════════════
+
+VERSION="1.0.0"
+DEGENI_HOME="$HOME/DEGENI"
+AUTH_DIR="$HOME/.cli-proxy-api"
+PROXY_DIR="$HOME/cliproxyapi"
+
+R='\033[0;31m' G='\033[0;32m' Y='\033[1;33m' B='\033[0;34m'
+C='\033[0;36m' M='\033[0;35m' W='\033[1;37m' D='\033[0;90m' NC='\033[0m'
+
+# Auto-start services on launch
+ensure_services() {
+    # Start proxy if not running
+    if ! pgrep -f "cli-proxy-api" > /dev/null 2>&1; then
+        if [ -f "$PROXY_DIR/cli-proxy-api" ]; then
+            cd "$PROXY_DIR" && nohup ./cli-proxy-api > cliproxyapi.log 2>&1 &
+            sleep 2
+        fi
+    fi
+    
+    # Start API server if not running
+    if ! pgrep -f "degeni-api" > /dev/null 2>&1; then
+        if [ -f "$DEGENI_HOME/bin/degeni-api" ]; then
+            mkdir -p "$DEGENI_HOME/logs"
+            nohup python3 "$DEGENI_HOME/bin/degeni-api" > "$DEGENI_HOME/logs/api.log" 2>&1 &
+            sleep 1
+        fi
+    fi
+}
+
+# Run on startup
+ensure_services
+
+print_logo() {
+    echo -e "${C}"
+    cat << 'EOF'
+  ██████╗ ███████╗ ██████╗ ███████╗███╗   ██╗██╗
+  ██╔══██╗██╔════╝██╔════╝ ██╔════╝████╗  ██║██║
+  ██║  ██║█████╗  ██║  ███╗█████╗  ██╔██╗ ██║██║
+  ██║  ██║██╔══╝  ██║   ██║██╔══╝  ██║╚██╗██║██║
+  ██████╔╝███████╗╚██████╔╝███████╗██║ ╚████║██║
+  ╚═════╝ ╚══════╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚═╝
+EOF
+    echo -e "${NC}"
+    echo -e "${D}  Claude + Gemini AI Terminal | by BITZY.ID | v$VERSION${NC}"
+    echo ""
+}
+
+draw_line() { echo -e "${C}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"; }
+
+success() { echo -e " ${G}✓${NC} $1"; }
+error() { echo -e " ${R}✗${NC} $1"; }
+warning() { echo -e " ${Y}!${NC} $1"; }
+info() { echo -e " ${B}→${NC} $1"; }
+
+show_status() {
+    draw_line
+    echo -e " ${W}SYSTEM STATUS${NC}"
+    draw_line
+    echo ""
+    
+    if pgrep -f "cli-proxy-api" > /dev/null 2>&1; then
+        local pid=$(pgrep -f "cli-proxy-api" | head -1)
+        echo -e "  ${W}Proxy Server${NC}    ${G}● Online${NC} ${D}(PID: $pid)${NC}"
+    else
+        echo -e "  ${W}Proxy Server${NC}    ${R}● Offline${NC}"
+    fi
+    
+    local ag_count=$(ls $AUTH_DIR/antigravity-*.json 2>/dev/null | wc -l)
+    local gc_count=$(ls $AUTH_DIR/*.json 2>/dev/null | grep -v antigravity | wc -l)
+    echo -e "  ${W}Antigravity${NC}     ${C}$ag_count account(s)${NC}"
+    echo -e "  ${W}Gemini CLI${NC}      ${C}$gc_count account(s)${NC}"
+    
+    if [ -f "$PROXY_DIR/cliproxyapi.log" ]; then
+        local err=$(grep -c "payment_required\|Suspended" "$PROXY_DIR/cliproxyapi.log" 2>/dev/null || echo "0")
+        [ "$err" -gt 0 ] && echo -e "  ${W}Issues${NC}          ${R}$err detected${NC}" || echo -e "  ${W}Issues${NC}          ${G}None${NC}"
+    fi
+    echo ""
+}
+
+list_accounts() {
+    draw_line
+    echo -e " ${W}REGISTERED ACCOUNTS${NC}"
+    draw_line
+    echo ""
+    
+    local i=1
+    for f in $AUTH_DIR/antigravity-*.json; do
+        if [ -f "$f" ]; then
+            local email=$(basename "$f" | sed 's/antigravity-//' | sed 's/.json//' | sed 's/_/./g' | sed 's/.gmail.com/@gmail.com/')
+            local status="${G}● Active${NC}"
+            grep -q "Suspended.*$(basename $f)" "$PROXY_DIR/cliproxyapi.log" 2>/dev/null && status="${R}● Suspended${NC}"
+            [[ "$f" == *.disabled ]] && status="${Y}● Disabled${NC}"
+            
+            echo -e "  ${W}[$i]${NC} ${C}$email${NC}"
+            echo -e "      $status"
+            echo ""
+            ((i++))
+        fi
+    done
+    
+    [ "$i" -eq 1 ] && echo -e "  ${D}No Antigravity accounts found${NC}\n  ${D}Run: degeni add${NC}\n"
+}
+
+add_account() {
+    draw_line
+    echo -e " ${W}ADD NEW ACCOUNT${NC}"
+    draw_line
+    echo ""
+    echo -e "  ${W}Select provider:${NC}"
+    echo ""
+    echo -e "  ${C}[1]${NC} Antigravity ${G}(Claude wrappers + 10+ models)${NC}"
+    echo -e "  ${C}[2]${NC} Gemini CLI ${D}(Standard Gemini models)${NC}"
+    echo ""
+    read -p "  Choice [1-2]: " choice
+    
+    case $choice in
+        1)
+            info "Starting Antigravity OAuth..."
+            echo ""
+            echo -e "  ${Y}INSTRUCTIONS:${NC}"
+            echo -e "  1. A URL will appear below"
+            echo -e "  2. Open it in your browser"
+            echo -e "  3. Login with Google AI Pro account"
+            echo -e "  4. After authorize, copy the callback URL"
+            echo -e "  5. Paste it here when prompted"
+            echo ""
+            read -p "  Press Enter to continue..."
+            cd "$PROXY_DIR"
+            ./cli-proxy-api --antigravity-login
+            ;;
+        2)
+            info "Starting Gemini CLI OAuth..."
+            cd "$PROXY_DIR"
+            ./cli-proxy-api --login
+            ;;
+        *) error "Invalid choice" ;;
+    esac
+}
+
+disable_account() {
+    list_accounts
+    read -p "  Select account number to disable: " num
+    local i=1
+    for f in $AUTH_DIR/antigravity-*.json; do
+        if [ "$i" -eq "$num" ] && [ -f "$f" ]; then
+            mv "$f" "$f.disabled"
+            success "Disabled: $(basename $f)"
+            warning "Run 'degeni restart' to apply"
+            return
+        fi
+        ((i++))
+    done
+    error "Invalid selection"
+}
+
+enable_account() {
+    draw_line
+    echo -e " ${W}DISABLED ACCOUNTS${NC}"
+    draw_line
+    echo ""
+    local i=1
+    for f in $AUTH_DIR/*.disabled; do
+        [ -f "$f" ] && echo -e "  ${W}[$i]${NC} $(basename $f)" && ((i++))
+    done
+    [ "$i" -eq 1 ] && info "No disabled accounts" && return
+    
+    read -p "  Select to enable: " num
+    i=1
+    for f in $AUTH_DIR/*.disabled; do
+        if [ "$i" -eq "$num" ] && [ -f "$f" ]; then
+            mv "$f" "${f%.disabled}"
+            success "Enabled!"
+            warning "Run 'degeni restart' to apply"
+            return
+        fi
+        ((i++))
+    done
+}
+
+restart_proxy() {
+    info "Stopping proxy..."
+    pkill -9 cli-proxy-api 2>/dev/null
+    sleep 2
+    info "Starting proxy..."
+    cd "$PROXY_DIR"
+    nohup ./cli-proxy-api > cliproxyapi.log 2>&1 &
+    echo $! > "$HOME/cliproxyapi.pid"
+    sleep 3
+    pgrep -f "cli-proxy-api" > /dev/null && success "Proxy started! All accounts unsuspended." || error "Failed to start"
+}
+
+test_accounts() {
+    draw_line
+    echo -e " ${W}TESTING ACCOUNTS${NC}"
+    draw_line
+    echo ""
+    for f in $AUTH_DIR/antigravity-*.json; do
+        if [ -f "$f" ]; then
+            local email=$(basename "$f" | sed 's/antigravity-//' | sed 's/.json//' | sed 's/_/./g' | sed 's/.gmail.com/@gmail.com/')
+            echo -ne "  Testing ${C}$email${NC}... "
+            local result=$(timeout 20 curl -s -X POST http://localhost:8317/v1/messages \
+                -H "x-api-key: $(grep -A1 'api-keys:' $PROXY_DIR/config.yaml | tail -1 | sed 's/.*\"\(sk-[^\"]*\)\".*/\1/')" \
+                -H "Content-Type: application/json" \
+                -H "anthropic-version: 2023-06-01" \
+                -d '{"model":"gemini-claude-sonnet-4-5-thinking","max_tokens":5,"messages":[{"role":"user","content":"hi"}]}' 2>&1)
+            echo "$result" | grep -q "content" && echo -e "${G}✓ OK${NC}" || echo -e "${R}✗ FAILED${NC}"
+        fi
+    done
+    echo ""
+}
+
+switch_model() {
+    draw_line
+    echo -e " ${W}SWITCH AI MODEL${NC}"
+    draw_line
+    echo ""
+    echo -e "  ${C}[1]${NC} gemini-claude-sonnet-4-5-thinking ${G}★ Recommended${NC}"
+    echo -e "  ${C}[2]${NC} gemini-claude-opus-4-5-thinking"
+    echo -e "  ${C}[3]${NC} gemini-claude-sonnet-4-5"
+    echo -e "  ${C}[4]${NC} gemini-3-pro-preview ${Y}(Free, stable)${NC}"
+    echo -e "  ${C}[5]${NC} gemini-2.5-pro"
+    echo -e "  ${C}[6]${NC} gemini-2.5-flash ${D}(Fast)${NC}"
+    echo ""
+    read -p "  Select [1-6]: " choice
+    
+    local models=("gemini-claude-sonnet-4-5-thinking" "gemini-claude-opus-4-5-thinking" "gemini-claude-sonnet-4-5" "gemini-3-pro-preview" "gemini-2.5-pro" "gemini-2.5-flash")
+    if [ "$choice" -ge 1 ] 2>/dev/null && [ "$choice" -le 6 ] 2>/dev/null; then
+        local model=${models[$((choice-1))]}
+        [ -f ~/DEGENI/bin/ai ] && sed -i "s/ANTHROPIC_DEFAULT_SONNET_MODEL=.*/ANTHROPIC_DEFAULT_SONNET_MODEL=$model/g" ~/DEGENI/bin/ai
+        [ -f ~/DEGENI/bin/ai ] && sed -i "s/ANTHROPIC_DEFAULT_OPUS_MODEL=.*/ANTHROPIC_DEFAULT_OPUS_MODEL=$model/g" ~/DEGENI/bin/ai
+        success "Switched to: $model"
+    else
+        error "Invalid"
+    fi
+}
+
+view_errors() {
+    diagnose_problems
+}
+
+diagnose_problems() {
+    draw_line
+    echo -e " ${W}🔍 DIAGNOSTICS & PROBLEM SOLVER${NC}"
+    draw_line
+    echo ""
+    
+    local has_problems=0
+    local problem_count=0
+    
+    # Check 1: Proxy server running?
+    echo -e "  ${W}[1] Proxy Server${NC}"
+    if pgrep -f "cli-proxy-api" > /dev/null 2>&1; then
+        echo -e "      ${G}✓ Online${NC}"
+    else
+        echo -e "      ${R}✗ OFFLINE${NC}"
+        echo -e "      ${Y}Problem:${NC} Proxy server tidak jalan"
+        echo -e "      ${C}Solution:${NC} degeni restart"
+        has_problems=1
+        ((problem_count++))
+    fi
+    echo ""
+    
+    # Check 2: Accounts exist?
+    echo -e "  ${W}[2] Accounts${NC}"
+    local ag_count=$(ls $AUTH_DIR/antigravity-*.json 2>/dev/null | grep -v disabled | wc -l)
+    if [ "$ag_count" -gt 0 ]; then
+        echo -e "      ${G}✓ $ag_count Antigravity account(s)${NC}"
+    else
+        echo -e "      ${R}✗ No accounts${NC}"
+        echo -e "      ${Y}Problem:${NC} Belum ada akun Google AI"
+        echo -e "      ${C}Solution:${NC} degeni add"
+        has_problems=1
+        ((problem_count++))
+    fi
+    echo ""
+    
+    # Check 3: Rate Limit / Quota errors
+    echo -e "  ${W}[3] Rate Limits${NC}"
+    if [ -f "$PROXY_DIR/cliproxyapi.log" ]; then
+        local rate_errors=$(grep -c "429\|rate.limit\|quota" "$PROXY_DIR/cliproxyapi.log" 2>/dev/null || echo "0")
+        if [ "$rate_errors" -gt 0 ]; then
+            echo -e "      ${Y}! $rate_errors rate limit warning(s)${NC}"
+            echo -e "      ${Y}Problem:${NC} Model mencapai quota limit"
+            echo -e "      ${C}Solution:${NC}"
+            echo -e "        1. degeni restart ${D}(clear suspended)${NC}"
+            echo -e "        2. degeni model ${D}(switch model)${NC}"
+            echo -e "        3. degeni add ${D}(tambah akun)${NC}"
+            has_problems=1
+            ((problem_count++))
+        else
+            echo -e "      ${G}✓ No rate limits${NC}"
+        fi
+    fi
+    echo ""
+    
+    # Check 4: Payment Required errors
+    echo -e "  ${W}[4] Payment/Auth Errors${NC}"
+    if [ -f "$PROXY_DIR/cliproxyapi.log" ]; then
+        local pay_errors=$(grep -c "payment_required\|auth_unavailable\|unauthorized" "$PROXY_DIR/cliproxyapi.log" 2>/dev/null | head -1 || echo "0")
+        pay_errors=${pay_errors:-0}
+        if [ "$pay_errors" -gt 0 ] 2>/dev/null; then
+            echo -e "      ${R}✗ $pay_errors payment/auth error(s)${NC}"
+            echo -e "      ${Y}Problem:${NC} Token expired atau akun perlu reauth"
+            echo -e "      ${C}Solution:${NC}"
+            echo -e "        1. degeni restart ${D}(refresh token)${NC}"
+            echo -e "        2. degeni add ${D}(re-login akun)${NC}"
+            has_problems=1
+            ((problem_count++))
+        else
+            echo -e "      ${G}✓ No auth errors${NC}"
+        fi
+    fi
+    echo ""
+    
+    # Check 5: Suspended accounts
+    echo -e "  ${W}[5] Suspended Accounts${NC}"
+    if [ -f "$PROXY_DIR/cliproxyapi.log" ]; then
+        local suspended=$(grep -c "Suspended" "$PROXY_DIR/cliproxyapi.log" 2>/dev/null | head -1 || echo "0")
+        suspended=${suspended:-0}
+        if [ "$suspended" -gt 0 ] 2>/dev/null; then
+            echo -e "      ${Y}! $suspended suspension(s) detected${NC}"
+            echo -e "      ${Y}Problem:${NC} Beberapa akun di-suspend sementara"
+            echo -e "      ${C}Solution:${NC} degeni restart ${D}(auto unsuspend)${NC}"
+            has_problems=1
+            ((problem_count++))
+        else
+            echo -e "      ${G}✓ No suspensions${NC}"
+        fi
+    fi
+    echo ""
+    
+    # Check 6: Connection test
+    echo -e "  ${W}[6] API Connection${NC}"
+    local test_result=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" http://localhost:8317/v1/models 2>/dev/null || echo "000")
+    if [ "$test_result" == "200" ]; then
+        echo -e "      ${G}✓ API responding${NC}"
+    else
+        echo -e "      ${R}✗ API not responding (HTTP $test_result)${NC}"
+        echo -e "      ${Y}Problem:${NC} Proxy API tidak merespons"
+        echo -e "      ${C}Solution:${NC} degeni restart"
+        has_problems=1
+        ((problem_count++))
+    fi
+    echo ""
+    
+    draw_line
+    if [ "$has_problems" -eq 0 ]; then
+        echo -e " ${G}✓ ALL SYSTEMS OK - No problems detected!${NC}"
+    else
+        echo -e " ${Y}⚠ Found $problem_count problem(s)${NC}"
+        echo ""
+        echo -e " ${W}QUICK FIX OPTIONS:${NC}"
+        echo ""
+        echo -e "  ${C}[1]${NC} Auto-fix all ${D}(restart + clear)${NC}"
+        echo -e "  ${C}[2]${NC} Restart proxy only"
+        echo -e "  ${C}[3]${NC} Switch model"
+        echo -e "  ${C}[4]${NC} Add new account"
+        echo -e "  ${C}[0]${NC} Back to menu"
+        echo ""
+        read -p "  Select fix [0-4]: " fix_choice
+        case $fix_choice in
+            1) 
+                echo ""
+                info "Auto-fixing all issues..."
+                pkill -9 cli-proxy-api 2>/dev/null
+                sleep 2
+                # Clear error log
+                echo "" > "$PROXY_DIR/cliproxyapi.log" 2>/dev/null
+                cd "$PROXY_DIR"
+                nohup ./cli-proxy-api > cliproxyapi.log 2>&1 &
+                sleep 3
+                success "Proxy restarted & logs cleared!"
+                ;;
+            2) restart_proxy ;;
+            3) switch_model ;;
+            4) add_account ;;
+            *) return ;;
+        esac
+    fi
+    draw_line
+    echo ""
+}
+
+# Quick health check function
+health_check() {
+    local issues=0
+    
+    # Proxy check
+    pgrep -f "cli-proxy-api" > /dev/null 2>&1 || ((issues++))
+    
+    # Account check
+    [ $(ls $AUTH_DIR/antigravity-*.json 2>/dev/null | wc -l) -eq 0 ] && ((issues++))
+    
+    # Recent errors check
+    if [ -f "$PROXY_DIR/cliproxyapi.log" ]; then
+        local recent_errors=$(tail -50 "$PROXY_DIR/cliproxyapi.log" | grep -c "429\|payment_required\|Suspended" 2>/dev/null || echo "0")
+        [ "$recent_errors" -gt 5 ] && ((issues++))
+    fi
+    
+    echo $issues
+}
+
+start_api_server() {
+    if ! pgrep -f "degeni-api" > /dev/null 2>&1; then
+        mkdir -p "$DEGENI_HOME/logs"
+        nohup python3 "$DEGENI_HOME/bin/degeni-api" > "$DEGENI_HOME/logs/api.log" 2>&1 &
+        sleep 1
+    fi
+}
+
+open_dashboard() {
+    # Start API server first
+    info "Starting API server..."
+    start_api_server
+    if pgrep -f "degeni-api" > /dev/null 2>&1; then
+        success "API server running on port 8321"
+    else
+        warning "API server failed to start"
+    fi
+    
+    # Start HTTP server for dashboard
+    pkill -f "python3 -m http.server 8080" 2>/dev/null
+    cd "$DEGENI_HOME/ui" 2>/dev/null || cd "$DEGENI_HOME"
+    python3 -m http.server 8080 &>/dev/null &
+    sleep 1
+    
+    echo ""
+    success "Dashboard running!"
+    echo -e "  ${C}http://localhost:8080/dashboard.html${NC}"
+    echo ""
+    
+    # Try to open in browser
+    if command -v xdg-open &> /dev/null; then
+        xdg-open "http://localhost:8080/dashboard.html" 2>/dev/null &
+    fi
+}
+
+chat_mode() {
+    info "Starting AI Chat with Session Support..."
+    echo ""
+    # Use ai wrapper which has session support
+    bash "$DEGENI_HOME/bin/ai"
+}
+
+quick_ask() {
+    export ANTHROPIC_BASE_URL=http://127.0.0.1:8317
+    export ANTHROPIC_AUTH_TOKEN=$(grep -A1 "api-keys:" $PROXY_DIR/config.yaml | tail -1 | sed 's/.*"\(sk-[^"]*\)".*/\1/' || echo "sk-default")
+    export ANTHROPIC_DEFAULT_SONNET_MODEL=gemini-claude-sonnet-4-5-thinking
+    export ANTHROPIC_DEFAULT_OPUS_MODEL=gemini-claude-sonnet-4-5-thinking
+    claude --dangerously-skip-permissions -p "$@"
+}
+
+show_help() {
+    draw_line
+    echo -e " ${W}DEGENI COMMANDS${NC}"
+    draw_line
+    echo ""
+    echo -e "  ${W}degeni \"...\"${NC}        Quick question to AI"
+    echo -e "  ${W}degeni chat${NC}         Interactive chat mode"
+    echo -e "  ${W}degeni${NC}              Interactive menu"
+    echo ""
+    echo -e "  ${W}degeni status${NC}       System status"
+    echo -e "  ${W}degeni diagnose${NC}     🔍 Diagnose problems + auto-fix"
+    echo -e "  ${W}degeni fix${NC}          Same as diagnose"
+    echo ""
+    echo -e "  ${W}degeni list${NC}         List accounts"
+    echo -e "  ${W}degeni add${NC}          Add new account"
+    echo -e "  ${W}degeni disable${NC}      Disable account"
+    echo -e "  ${W}degeni enable${NC}       Enable account"
+    echo -e "  ${W}degeni restart${NC}      Restart proxy"
+    echo -e "  ${W}degeni test${NC}         Test accounts"
+    echo -e "  ${W}degeni model${NC}        Switch AI model"
+    echo ""
+    echo -e "  ${W}degeni sessions${NC}     Manage chat sessions"
+    echo -e "  ${W}degeni dash${NC}         Open live dashboard"
+    echo -e "  ${W}degeni uninstall${NC}    Uninstall DEGENI"
+    echo ""
+}
+
+show_menu() {
+    echo ""
+    echo -e "  ${W}QUICK ACTIONS${NC}"
+    echo ""
+    echo -e "  ${C}[1]${NC} 💬 Chat Mode        ${C}[6]${NC} 🔄 Restart Proxy"
+    echo -e "  ${C}[2]${NC} 📊 Status           ${C}[7]${NC} 🧪 Test Accounts"
+    echo -e "  ${C}[3]${NC} 📋 List Accounts    ${C}[8]${NC} 🔀 Switch Model"
+    echo -e "  ${C}[4]${NC} ➕ Add Account      ${C}[9]${NC} 🌐 Dashboard"
+    echo -e "  ${C}[5]${NC} ⚙️  Manage Accounts  ${C}[0]${NC} 🚪 Exit"
+    echo ""
+    echo -e "  ${C}[s]${NC} 📂 Sessions        ${C}[e]${NC} ⚠️  View Errors"
+    echo -e "  ${C}[h]${NC} ❓ Help"
+    echo ""
+}
+
+# Main
+case "$1" in
+    chat|c) clear; print_logo; chat_mode ;;
+    ask|a) shift; quick_ask "$@" ;;
+    status|s) clear; print_logo; show_status ;;
+    list|l) clear; print_logo; list_accounts ;;
+    add) clear; print_logo; add_account ;;
+    disable|d) clear; print_logo; disable_account ;;
+    enable|en) clear; print_logo; enable_account ;;
+    restart|r) clear; print_logo; restart_proxy ;;
+    test|t) clear; print_logo; test_accounts ;;
+    model|m) clear; print_logo; switch_model ;;
+    errors|err|diagnose|diag|fix) clear; print_logo; diagnose_problems ;;
+    dash|ui) clear; print_logo; open_dashboard ;;
+    session|sessions|ss) shift; python3 "$DEGENI_HOME/bin/degeni-session" "$@" ;;
+    uninstall) bash "$DEGENI_HOME/uninstall.sh" ;;
+    help|h|-h|--help) clear; print_logo; show_help ;;
+    version|-v|--version) echo "DEGENI v$VERSION by BITZY.ID" ;;
+    "")
+        # No arguments - show interactive menu
+        while true; do
+            clear
+            print_logo
+            show_status
+            show_menu
+            read -p "  Select [0-9/s/e/h]: " choice
+            case $choice in
+                1) chat_mode ;;
+                2) show_status; read -p "  Press Enter..." ;;
+                3) list_accounts; read -p "  Press Enter..." ;;
+                4) add_account; read -p "  Press Enter..." ;;
+                5) echo -e "\n  ${C}[d]${NC} Disable  ${C}[e]${NC} Enable"; read -p "  Choice: " c
+                   [ "$c" == "d" ] && disable_account || enable_account; read -p "  Press Enter..." ;;
+                6) restart_proxy; read -p "  Press Enter..." ;;
+                7) test_accounts; read -p "  Press Enter..." ;;
+                8) switch_model; read -p "  Press Enter..." ;;
+                9) open_dashboard; read -p "  Press Enter..." ;;
+                0|q) echo ""; info "Goodbye!"; exit 0 ;;
+                s|S) python3 "$DEGENI_HOME/bin/degeni-session"; read -p "  Press Enter..." ;;
+                e|E) view_errors; read -p "  Press Enter..." ;;
+                h|H) show_help; read -p "  Press Enter..." ;;
+            esac
+        done
+        ;;
+    *)
+        # Any other argument = quick ask
+        quick_ask "$@"
+        ;;
+esac

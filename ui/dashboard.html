@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEGENI Dashboard | Live Console</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09090b;
+            --card: #121214;
+            --card-hover: #1c1c1f;
+            --border: #27272a;
+            --border-hover: #3f3f46;
+            --primary: #e2e8f0;
+            --subtext: #a1a1aa;
+            --cyan: #06b6d4;
+            --green: #10b981;
+            --red: #ef4444;
+            --yellow: #f59e0b;
+            --purple: #8b5cf6;
+            --ease: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--primary); min-height: 100vh; line-height: 1.5; }
+        .bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 15% 15%, rgba(6, 182, 212, 0.03) 0%, transparent 40%), radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.03) 0%, transparent 40%); pointer-events: none; z-index: 0; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; position: relative; z-index: 1; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 40px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .logo { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.03em; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .logo::before { content: ''; display: block; width: 12px; height: 12px; background: var(--cyan); border-radius: 2px; box-shadow: 0 0 10px rgba(6, 182, 212, 0.3); }
+        .subtitle { color: var(--subtext); margin-top: 8px; font-size: 0.95rem; }
+        .brand { color: #fff; font-weight: 500; text-decoration: none; border-bottom: 1px dotted var(--subtext); }
+        .live-badge { background: var(--green); color: #000; padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; display: flex; align-items: center; gap: 6px; animation: pulse-bg 2s infinite; }
+        @keyframes pulse-bg { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; }
+        .card:nth-of-type(1) { grid-column: span 5; }
+        .card:nth-of-type(2) { grid-column: span 7; }
+        .card:nth-of-type(3) { grid-column: span 6; }
+        .card:nth-of-type(4) { grid-column: span 6; }
+        .card:nth-of-type(5) { grid-column: span 12; }
+        @media (max-width: 1024px) { .card:nth-of-type(1), .card:nth-of-type(2) { grid-column: span 12; } }
+        @media (max-width: 768px) { .grid { display: flex; flex-direction: column; } .header { flex-direction: column; gap: 16px; } }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: all 0.4s var(--ease); }
+        .card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+        .card h3 { font-size: 0.875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--subtext); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+        .icon { width: 18px; height: 18px; stroke-width: 2; stroke: currentColor; fill: none; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .stat-box { background: rgba(255,255,255,0.02); padding: 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); }
+        .stat-val { font-size: 1.5rem; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .status-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); animation: pulse 2s infinite; }
+        .status-dot.offline { background: var(--red); animation: none; }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        .stat-lbl { color: var(--subtext); font-size: 0.8rem; margin-top: 4px; }
+        .btn-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+        .btn { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: #fff; padding: 14px 20px; border-radius: 8px; font-family: inherit; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s var(--ease); display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
+        .btn:hover { background: var(--card-hover); border-color: var(--subtext); }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn.loading { pointer-events: none; }
+        .btn.loading::after { content: ''; width: 14px; height: 14px; border: 2px solid transparent; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-left: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .btn svg { width: 16px; height: 16px; stroke-width: 2; opacity: 0.8; }
+        .account { display: flex; justify-content: space-between; align-items: center; padding: 16px; margin-bottom: 12px; background: rgba(0,0,0,0.2); border: 1px solid transparent; border-radius: 8px; transition: all 0.2s; }
+        .account:hover { background: rgba(255,255,255,0.02); border-color: var(--border); }
+        .account-info { display: flex; align-items: center; gap: 12px; }
+        .avatar { width: 32px; height: 32px; border-radius: 6px; background: #27272a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; border: 1px solid rgba(255,255,255,0.1); }
+        .avatar.antigravity { background: linear-gradient(135deg, var(--purple), var(--cyan)); }
+        .avatar.gemini { background: linear-gradient(135deg, var(--yellow), var(--green)); }
+        .account h4 { font-size: 0.9rem; font-weight: 500; color: #fff; }
+        .account span { font-size: 0.75rem; color: var(--subtext); display: block; }
+        .badge { font-size: 0.7rem; padding: 4px 8px; border-radius: 4px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .badge-active { background: rgba(16, 185, 129, 0.1); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .badge-disabled { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .model { padding: 14px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; margin-bottom: 8px; transition: all 0.2s; }
+        .model:hover { background: rgba(255,255,255,0.03); }
+        .model.active { background: rgba(6, 182, 212, 0.05); border-color: rgba(6, 182, 212, 0.3); }
+        .model-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .model h4 { font-size: 0.9rem; font-weight: 500; color: #eee; }
+        .model span { font-size: 0.75rem; color: var(--subtext); font-family: 'JetBrains Mono', monospace; }
+        .tag-active { font-size: 0.65rem; color: var(--cyan); background: rgba(6, 182, 212, 0.1); padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        .log-container { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; max-height: 200px; overflow-y: auto; color: var(--subtext); }
+        .log-container::-webkit-scrollbar { width: 6px; }
+        .log-container::-webkit-scrollbar-track { background: transparent; }
+        .log-container::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        .log-entry { padding: 4px 0; border-bottom: 1px dashed rgba(255,255,255,0.05); }
+        .log-entry:last-child { border-bottom: none; }
+        .l-ok { color: var(--green); }
+        .l-warn { color: var(--yellow); }
+        .l-err { color: var(--red); }
+        .footer { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); text-align: center; color: #555; font-size: 0.85rem; }
+        .footer a { color: #777; text-decoration: none; }
+        .footer a:hover { color: #fff; }
+        .toast { position: fixed; bottom: 30px; right: 30px; background: #fff; color: #000; padding: 12px 20px; border-radius: 6px; font-weight: 500; font-size: 0.9rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: translateY(100px); opacity: 0; transition: all 0.4s var(--ease); z-index: 1000; display: flex; align-items: center; gap: 10px; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { background: var(--red); color: #fff; }
+        .toast.success { background: var(--green); color: #fff; }
+        .no-api { text-align: center; padding: 40px; color: var(--subtext); }
+        .no-api code { background: var(--card); padding: 8px 16px; border-radius: 6px; display: block; margin-top: 16px; }
+        .limit-alert { display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 12px 16px; margin-top: 16px; }
+        .limit-alert.show { display: flex; align-items: center; gap: 12px; animation: shake 0.5s ease-in-out; }
+        .limit-icon { font-size: 1.5rem; animation: pulse-warn 1s infinite; }
+        @keyframes pulse-warn { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .limit-text { flex: 1; }
+        .limit-text strong { color: var(--red); display: block; margin-bottom: 2px; }
+        .limit-text span { color: var(--subtext); font-size: 0.8rem; }
+        .model.limit { border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.05); }
+        .model.limit .limit-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--red); color: #fff; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-left: 8px; animation: pulse-warn 1s infinite; }
+        /* Modal Styles */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 90%; max-width: 500px; animation: modalIn 0.3s var(--ease); }
+        @keyframes modalIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal h2 { font-size: 1.25rem; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+        .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--subtext); cursor: pointer; font-size: 1.5rem; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: var(--subtext); font-size: 0.875rem; }
+        .form-group select, .form-group input { width: 100%; padding: 12px 16px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 0.95rem; }
+        .form-group select:focus, .form-group input:focus { outline: none; border-color: var(--cyan); }
+        .form-group input::placeholder { color: #555; }
+        .modal-steps { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 16px; margin: 20px 0; }
+        .modal-steps ol { margin: 0; padding-left: 20px; color: var(--subtext); font-size: 0.875rem; line-height: 1.8; }
+        .modal-steps code { background: rgba(6, 182, 212, 0.1); color: var(--cyan); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
+        .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+        .modal-actions .btn { flex: 1; }
+        .btn-primary { background: linear-gradient(135deg, var(--cyan), var(--green)); color: #000; font-weight: 600; }
+        .btn-secondary { background: rgba(255,255,255,0.05); }
+        .oauth-status { text-align: center; padding: 20px; }
+        .oauth-status .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--cyan); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+        .account-actions { display: flex; gap: 8px; }
+        .btn-sm { padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
+    </style>
+</head>
+<body>
+    <div class="bg"></div>
+    <div class="container">
+        <header class="header">
+            <div>
+                <div class="logo">DEGENI</div>
+                <div class="subtitle">Claude + Gemini AI Orchestrator &mdash; by <a href="https://bitzy.id" target="_blank" class="brand">BITZY.ID</a></div>
+            </div>
+            <div class="live-badge" id="liveBadge">
+                <span style="width:6px;height:6px;background:#000;border-radius:50%;"></span>
+                LIVE
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Status Card -->
+            <div class="card">
+                <h3>
+                    <svg class="icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
+                    System Status
+                </h3>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-val">
+                            <div class="status-dot" id="statusDot"></div>
+                            <span id="statusText">Loading...</span>
+                        </div>
+                        <div class="stat-lbl">Proxy Server <span id="pidText"></span></div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-val" id="accountCount">-</div>
+                        <div class="stat-lbl">Active Accounts</div>
+                    </div>
+                </div>
+                <!-- Limit Alert -->
+                <div class="limit-alert" id="limitAlert">
+                    <div class="limit-icon">⚠️</div>
+                    <div class="limit-text">
+                        <strong>Quota Limit Reached!</strong>
+                        <span id="limitMsg">Switch model or add another account</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <h3>
+                    <svg class="icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
+                    Quick Actions
+                </h3>
+                <div class="btn-group">
+                    <button class="btn" id="btnRestart" onclick="restartProxy(this)">
+                        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+                        Restart Proxy
+                    </button>
+                    <button class="btn" id="btnTest" onclick="testConnection(this)">
+                        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" /></svg>
+                        Test Connection
+                    </button>
+                    <button class="btn" onclick="openAddAccountModal()">
+                        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                        Add Account
+                    </button>
+                </div>
+            </div>
+
+            <!-- Accounts (LIVE) -->
+            <div class="card">
+                <h3>
+                    <svg class="icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                    Registered Accounts
+                </h3>
+                <div id="accountList">
+                    <div style="color:var(--subtext);text-align:center;padding:20px;">Loading accounts...</div>
+                </div>
+            </div>
+
+            <!-- Model Selector -->
+            <div class="card">
+                <h3>
+                    <svg class="icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" /></svg>
+                    Model Configuration
+                </h3>
+                <div id="modelList">
+                    <div style="color:var(--subtext);text-align:center;padding:20px;">Loading models...</div>
+                </div>
+            </div>
+
+            <!-- Activity Log (LIVE) -->
+            <div class="card">
+                <h3>
+                    <svg class="icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 9.75L16.5 12l-2.25 2.25m-6 0l2.25-2.25-2.25-2.25M6.75 19.5h10.5c.828 0 1.5-.672 1.5-1.5V6c0-.828-.672-1.5-1.5-1.5H6.75C5.922 4.5 5.25 5.172 5.25 6v12c0 .828.672 1.5 1.5 1.5z" /></svg>
+                    System Logs (Live)
+                </h3>
+                <div class="log-container" id="logContainer">
+                    <div class="log-entry">Loading logs...</div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p><strong>DEGENI</strong> v1.0.0 &mdash; Powered by <a href="https://bitzy.id" target="_blank" class="brand">BITZY.ID</a></p>
+            <p style="margin-top:12px;font-size:0.75rem;color:#444;">Auto-refresh: 5s | API: localhost:8321</p>
+        </footer>
+    </div>
+
+    <div class="toast" id="toast"><span id="toastMsg">Message</span></div>
+
+    <!-- Add Account Modal -->
+    <div class="modal-overlay" id="addAccountModal" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h2>➕ Add Google AI Account</h2>
+            
+            <div id="oauthStep1">
+                <div style="text-align:center;margin-bottom:20px;">
+                    <div style="font-size:3rem;margin-bottom:10px;">🔐</div>
+                    <p style="color:var(--text);font-size:1rem;">Add a new Google AI account</p>
+                </div>
+                
+                <div class="modal-steps" style="background:var(--card);padding:16px;border-radius:8px;margin-bottom:20px;">
+                    <p style="color:var(--cyan);font-weight:600;margin-bottom:12px;">📋 Run this command in terminal:</p>
+                    <code style="display:block;background:#000;padding:12px;border-radius:6px;font-size:1rem;color:var(--green);user-select:all;cursor:pointer;" onclick="copyCommand(this)" title="Click to copy">degeni add</code>
+                    <p style="color:var(--subtext);font-size:0.8rem;margin-top:8px;">Click the command to copy</p>
+                </div>
+                
+                <div class="modal-steps" style="background:var(--card);padding:16px;border-radius:8px;">
+                    <p style="color:var(--subtext);font-weight:500;margin-bottom:8px;">Steps:</p>
+                    <ol style="color:var(--subtext);font-size:0.9rem;padding-left:20px;margin:0;">
+                        <li>Run <code>degeni add</code> in terminal</li>
+                        <li>Choose provider (Antigravity recommended)</li>
+                        <li>Open the OAuth URL in browser</li>
+                        <li>Login with Google account</li>
+                        <li>Come back here and click <strong>Refresh</strong></li>
+                    </ol>
+                </div>
+                
+                <div class="modal-actions" style="margin-top:20px;">
+                    <button class="btn btn-secondary" onclick="closeAddAccountModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="refreshAfterAdd()">🔄 Refresh Accounts</button>
+                </div>
+            </div>
+            
+            <div id="oauthStep3" style="display:none;">
+                <div class="oauth-status">
+                    <div style="font-size:3rem;margin-bottom:16px;">✅</div>
+                    <p style="color:var(--green);font-size:1.1rem;font-weight:600;">New Account Detected!</p>
+                    <p style="color:var(--subtext);margin-top:8px;">Restart proxy to activate.</p>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeAddAccountModal()">Close</button>
+                    <button class="btn btn-primary" onclick="restartAndClose()">🔄 Restart Proxy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8321/api';
+        let currentModel = '';
+        let refreshInterval;
+
+        // Toast notification
+        function showToast(msg, type = 'default') {
+            const t = document.getElementById('toast');
+            const m = document.getElementById('toastMsg');
+            m.textContent = msg;
+            t.className = 'toast show' + (type === 'error' ? ' error' : type === 'success' ? ' success' : '');
+            setTimeout(() => t.className = 'toast', 3000);
+        }
+
+        // Fetch with error handling
+        async function api(endpoint, options = {}) {
+            try {
+                const res = await fetch(API_BASE + endpoint, options);
+                return await res.json();
+            } catch (e) {
+                console.error('API Error:', e);
+                return null;
+            }
+        }
+
+        // Load status
+        let limitHit = false;
+        let limitModel = '';
+        let apiConnected = false;
+        
+        async function loadStatus() {
+            const data = await api('/status');
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            const pid = document.getElementById('pidText');
+            const count = document.getElementById('accountCount');
+            const badge = document.getElementById('liveBadge');
+            const limitAlert = document.getElementById('limitAlert');
+            const limitMsg = document.getElementById('limitMsg');
+            
+            if (!data) {
+                // API not available
+                apiConnected = false;
+                dot.classList.add('offline');
+                text.textContent = 'API Offline';
+                pid.textContent = '';
+                count.textContent = '-';
+                badge.style.background = 'var(--red)';
+                badge.innerHTML = '<span style="width:6px;height:6px;background:#fff;border-radius:50%;"></span> OFFLINE';
+                
+                // Show help message
+                if (!document.getElementById('apiOfflineMsg')) {
+                    limitAlert.innerHTML = `
+                        <div class="limit-icon">⚠️</div>
+                        <div class="limit-text">
+                            <strong>API Server Not Running</strong>
+                            <span>Run: ~/DEGENI/start-dashboard.sh</span>
+                        </div>
+                    `;
+                    limitAlert.classList.add('show');
+                    limitAlert.id = 'apiOfflineMsg';
+                }
+                return;
+            }
+            
+            apiConnected = true;
+            limitAlert.id = 'limitAlert';
+            badge.innerHTML = '<span style="width:6px;height:6px;background:#000;border-radius:50%;"></span> LIVE';
+            
+            if (data.online) {
+                dot.classList.remove('offline');
+                text.textContent = 'Online';
+                pid.textContent = `(PID: ${data.pid})`;
+                badge.style.background = 'var(--green)';
+            } else {
+                dot.classList.add('offline');
+                text.textContent = 'Offline';
+                pid.textContent = '';
+                badge.style.background = 'var(--red)';
+            }
+            count.textContent = data.accounts.antigravity;
+            
+            // Check for limit
+            if (data.limit && data.limit.hit) {
+                limitHit = true;
+                limitModel = data.limit.model || '';
+                limitAlert.classList.add('show');
+                limitMsg.textContent = data.limit.message || 'Switch model or add another account';
+                badge.style.background = 'var(--yellow)';
+                
+                // Update model list to show limit indicator
+                updateModelLimitIndicator();
+            } else {
+                limitHit = false;
+                limitModel = '';
+                limitAlert.classList.remove('show');
+            }
+        }
+        
+        // Update model cards to show limit indicator
+        function updateModelLimitIndicator() {
+            const models = document.querySelectorAll('.model');
+            models.forEach(m => {
+                const modelId = m.getAttribute('data-model') || m.querySelector('span')?.textContent || '';
+                if (limitModel && modelId.toLowerCase().includes(limitModel)) {
+                    m.classList.add('limit');
+                    if (!m.querySelector('.limit-badge')) {
+                        const badge = document.createElement('span');
+                        badge.className = 'limit-badge';
+                        badge.innerHTML = '⚠️ LIMIT';
+                        m.querySelector('.model-header')?.appendChild(badge);
+                    }
+                } else {
+                    m.classList.remove('limit');
+                    m.querySelector('.limit-badge')?.remove();
+                }
+            });
+        }
+
+        // Load accounts
+        async function loadAccounts() {
+            const data = await api('/accounts');
+            const container = document.getElementById('accountList');
+            
+            if (data && data.accounts && data.accounts.length > 0) {
+                container.innerHTML = data.accounts.map(acc => `
+                    <div class="account">
+                        <div class="account-info" onclick="toggleAccount('${acc.filename}', ${acc.active})" style="cursor:pointer;flex:1;">
+                            <div class="avatar ${acc.type}">${acc.email[0].toUpperCase()}</div>
+                            <div>
+                                <h4>${acc.email}</h4>
+                                <span>${acc.project || acc.type}</span>
+                            </div>
+                        </div>
+                        <div class="account-actions">
+                            <span class="badge ${acc.active ? 'badge-active' : 'badge-disabled'}" onclick="toggleAccount('${acc.filename}', ${acc.active})" style="cursor:pointer;">${acc.active ? 'Active' : 'Disabled'}</span>
+                            <button class="btn btn-sm btn-danger" onclick="deleteAccount('${acc.filename}', event)" title="Delete">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<div style="color:var(--subtext);text-align:center;padding:20px;">No accounts found<br><small>Click "Add Account" to add one</small></div>';
+            }
+        }
+
+        // Load models
+        async function loadModels() {
+            const config = await api('/config');
+            currentModel = config?.current_model || 'gemini-claude-sonnet-4-5-thinking';
+
+            const models = [
+                { id: 'gemini-claude-sonnet-4-5-thinking', name: 'Claude Sonnet 4.5 Thinking', desc: 'Best for coding' },
+                { id: 'gemini-claude-opus-4-5-thinking', name: 'Claude Opus 4.5 Thinking', desc: 'Complex reasoning' },
+                { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', desc: 'Latest Gemini' },
+                { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', desc: 'Stable & powerful' }
+            ];
+
+            const container = document.getElementById('modelList');
+            container.innerHTML = models.map(m => {
+                const isLimit = limitHit && limitModel && m.id.toLowerCase().includes(limitModel);
+                return `
+                <div class="model ${m.id === currentModel ? 'active' : ''} ${isLimit ? 'limit' : ''}" data-model="${m.id}" onclick="switchModel('${m.id}', this)">
+                    <div class="model-header">
+                        <h4>${m.name}</h4>
+                        <div class="tag-wrapper">
+                            ${m.id === currentModel ? '<span class="tag-active">ACTIVE</span>' : ''}
+                            ${isLimit ? '<span class="limit-badge">⚠️ LIMIT</span>' : ''}
+                        </div>
+                    </div>
+                    <span>${m.id}</span>
+                </div>
+            `}).join('');
+        }
+
+        // Load logs
+        async function loadLogs() {
+            const data = await api('/logs');
+            const container = document.getElementById('logContainer');
+            
+            if (data && data.logs) {
+                container.innerHTML = data.logs.slice(-20).reverse().map(log => {
+                    const cls = log.type === 'ok' ? 'l-ok' : log.type === 'error' ? 'l-err' : log.type === 'warn' ? 'l-warn' : '';
+                    return `<div class="log-entry ${cls}">${log.msg}</div>`;
+                }).join('');
+            }
+        }
+
+        // Toggle account
+        async function toggleAccount(filename, isActive) {
+            const data = await api('/account/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            });
+            
+            if (data?.success) {
+                showToast(`Account ${data.action}. Restart proxy to apply.`, 'success');
+                loadAccounts();
+                loadStatus();
+            } else {
+                showToast('Failed to toggle account', 'error');
+            }
+        }
+
+        // Switch model
+        async function switchModel(model, el) {
+            const data = await api('/model/switch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model })
+            });
+            
+            if (data?.success) {
+                showToast(`Switched to ${model}`, 'success');
+                loadModels();
+            } else {
+                showToast('Failed to switch model', 'error');
+            }
+        }
+
+        // Restart proxy
+        async function restartProxy(btn) {
+            btn.classList.add('loading');
+            const data = await api('/restart', { method: 'POST' });
+            btn.classList.remove('loading');
+            
+            if (data?.success) {
+                showToast('Proxy restarted!', 'success');
+                setTimeout(loadStatus, 2000);
+            } else {
+                showToast('Failed to restart', 'error');
+            }
+        }
+
+        // Test connection
+        async function testConnection(btn) {
+            btn.classList.add('loading');
+            const data = await api('/test', { method: 'POST' });
+            btn.classList.remove('loading');
+            
+            if (data?.success) {
+                showToast('Connection OK!', 'success');
+            } else {
+                showToast(data?.message || 'Connection failed', 'error');
+            }
+        }
+
+        // ============ Add Account Modal Functions ============
+        
+        async function openAddAccountModal() {
+            // Store current account count to detect new additions
+            const data = await api('/accounts');
+            initialAccountCount = data?.accounts?.length || 0;
+            
+            // Reset modal state
+            document.getElementById('oauthStep1').style.display = 'block';
+            document.getElementById('oauthStep3').style.display = 'none';
+            
+            document.getElementById('addAccountModal').classList.add('show');
+        }
+        
+        function closeAddAccountModal() {
+            document.getElementById('addAccountModal').classList.remove('show');
+        }
+        
+        function closeModal(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                closeAddAccountModal();
+            }
+        }
+        
+        let initialAccountCount = 0;
+        
+        function copyCommand(el) {
+            navigator.clipboard.writeText(el.textContent);
+            showToast('Command copied!', 'success');
+        }
+        
+        async function refreshAfterAdd() {
+            // Check if new accounts were added
+            const data = await api('/accounts');
+            if (data?.accounts) {
+                const newCount = data.accounts.length;
+                if (newCount > initialAccountCount) {
+                    // New account detected!
+                    document.getElementById('oauthStep1').style.display = 'none';
+                    document.getElementById('oauthStep3').style.display = 'block';
+                    loadAccounts();
+                    loadStatus();
+                } else {
+                    showToast('No new accounts found. Complete OAuth in terminal first.', 'error');
+                }
+            } else {
+                showToast('Failed to check accounts', 'error');
+            }
+        }
+        
+        async function restartAndClose() {
+            const data = await api('/restart', { method: 'POST' });
+            if (data?.success) {
+                showToast('Proxy restarted!', 'success');
+                setTimeout(loadStatus, 2000);
+            }
+            closeAddAccountModal();
+        }
+        
+        // Delete account
+        async function deleteAccount(filename, event) {
+            event.stopPropagation();
+            if (!confirm('Delete this account?')) return;
+            
+            const data = await api('/account/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            });
+            
+            if (data?.success) {
+                showToast('Account deleted', 'success');
+                loadAccounts();
+                loadStatus();
+            } else {
+                showToast(data?.error || 'Failed to delete', 'error');
+            }
+        }
+
+        // Initialize
+        async function init() {
+            await Promise.all([loadStatus(), loadAccounts(), loadModels(), loadLogs()]);
+            
+            // Auto-refresh every 5 seconds
+            refreshInterval = setInterval(() => {
+                loadStatus();
+                loadLogs();
+            }, 5000);
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "id": "20251210_192953",
+  "name": "Test Session",
+  "created": "2025-12-10 19:29:53",
+  "updated": "2025-12-10 21:51:56",
+  "model": "gemini-claude-sonnet-4-5-thinking",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hello, this is a test message",
+      "timestamp": "2025-12-10 19:29:53"
+    },
+    {
+      "role": "assistant",
+      "content": "Hi! This is the AI response.",
+      "timestamp": "2025-12-10 19:29:53"
+    },
+    {
+      "role": "user",
+      "content": "test message",
+      "timestamp": "2025-12-10 21:51:56"
+    }
+  ]
+}

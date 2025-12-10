@@ -1,0 +1,476 @@
+#!/usr/bin/env python3
+"""
+DEGENI Session Manager
+Save, load, and manage chat sessions
+by BITZY.ID
+"""
+
+import os
+import sys
+import json
+import datetime
+import subprocess
+from pathlib import Path
+
+DEGENI_HOME = Path.home() / "DEGENI"
+SESSIONS_DIR = DEGENI_HOME / "sessions"
+CURRENT_SESSION_FILE = SESSIONS_DIR / ".current_session"
+
+# Colors
+class C:
+    CYAN = '\033[0;36m'
+    GREEN = '\033[0;32m'
+    YELLOW = '\033[1;33m'
+    RED = '\033[0;31m'
+    WHITE = '\033[1;37m'
+    GRAY = '\033[0;90m'
+    NC = '\033[0m'
+
+def ensure_dirs():
+    SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+
+def get_timestamp():
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+def get_session_id():
+    return datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+def list_sessions():
+    """List all saved sessions"""
+    ensure_dirs()
+    sessions = []
+    
+    for f in sorted(SESSIONS_DIR.glob("*.json"), reverse=True):
+        try:
+            with open(f, 'r') as file:
+                data = json.load(file)
+                sessions.append({
+                    'id': f.stem,
+                    'file': f,
+                    'name': data.get('name', 'Untitled'),
+                    'created': data.get('created', 'Unknown'),
+                    'updated': data.get('updated', 'Unknown'),
+                    'messages': len(data.get('messages', [])),
+                    'model': data.get('model', 'Unknown')
+                })
+        except:
+            pass
+    
+    return sessions
+
+def print_sessions():
+    """Print sessions in nice format"""
+    sessions = list_sessions()
+    
+    print(f"\n{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
+    print(f" {C.WHITE}SAVED SESSIONS{C.NC}")
+    print(f"{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
+    print()
+    
+    if not sessions:
+        print(f"  {C.GRAY}No sessions found{C.NC}")
+        print(f"  {C.GRAY}Start a new chat with: ai{C.NC}")
+    else:
+        for i, s in enumerate(sessions[:20], 1):  # Show max 20
+            print(f"  {C.WHITE}[{i}]{C.NC} {C.CYAN}{s['name'][:40]}{C.NC}")
+            print(f"      {C.GRAY}ID: {s['id']} | Messages: {s['messages']} | Model: {s['model']}{C.NC}")
+            print(f"      {C.GRAY}Updated: {s['updated']}{C.NC}")
+            print()
+    
+    print(f"{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
+    print(f"  {C.WHITE}Commands:{C.NC}")
+    print(f"  {C.GREEN}degeni session load <number>{C.NC}  - Load session")
+    print(f"  {C.GREEN}degeni session delete <number>{C.NC} - Delete session")
+    print(f"  {C.GREEN}degeni session clear{C.NC}          - Delete all sessions")
+    print(f"  {C.GREEN}degeni session new{C.NC}            - Start new session")
+    print()
+
+def create_session(name=None):
+    """Create a new session"""
+    ensure_dirs()
+    session_id = get_session_id()
+    
+    if not name:
+        name = f"Chat {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}"
+    
+    session = {
+        'id': session_id,
+        'name': name,
+        'created': get_timestamp(),
+        'updated': get_timestamp(),
+        'model': 'gemini-claude-sonnet-4-5-thinking',
+        'messages': []
+    }
+    
+    session_file = SESSIONS_DIR / f"{session_id}.json"
+    with open(session_file, 'w') as f:
+        json.dump(session, f, indent=2)
+    
+    # Set as current session
+    with open(CURRENT_SESSION_FILE, 'w') as f:
+        f.write(session_id)
+    
+    print(f" {C.GREEN}✓{C.NC} New session created: {C.CYAN}{session_id}{C.NC}")
+    return session_id
+
+def load_session(index_or_id):
+    """Load a session by index or ID"""
+    sessions = list_sessions()
+    
+    # Try as index first
+    try:
+        idx = int(index_or_id) - 1
+        if 0 <= idx < len(sessions):
+            session = sessions[idx]
+            with open(CURRENT_SESSION_FILE, 'w') as f:
+                f.write(session['id'])
+            print(f" {C.GREEN}✓{C.NC} Loaded session: {C.CYAN}{session['name']}{C.NC}")
+            print(f"   {C.GRAY}ID: {session['id']} | Messages: {session['messages']}{C.NC}")
+            return session['id']
+    except ValueError:
+        pass
+    
+    # Try as ID
+    for s in sessions:
+        if s['id'] == index_or_id:
+            with open(CURRENT_SESSION_FILE, 'w') as f:
+                f.write(s['id'])
+            print(f" {C.GREEN}✓{C.NC} Loaded session: {C.CYAN}{s['name']}{C.NC}")
+            return s['id']
+    
+    print(f" {C.RED}✗{C.NC} Session not found: {index_or_id}")
+    return None
+
+def delete_session(index_or_id):
+    """Delete a session"""
+    sessions = list_sessions()
+    
+    # Try as index
+    try:
+        idx = int(index_or_id) - 1
+        if 0 <= idx < len(sessions):
+            session = sessions[idx]
+            os.remove(session['file'])
+            print(f" {C.GREEN}✓{C.NC} Deleted: {C.CYAN}{session['name']}{C.NC}")
+            return True
+    except ValueError:
+        pass
+    
+    # Try as ID
+    for s in sessions:
+        if s['id'] == index_or_id:
+            os.remove(s['file'])
+            print(f" {C.GREEN}✓{C.NC} Deleted: {C.CYAN}{s['name']}{C.NC}")
+            return True
+    
+    print(f" {C.RED}✗{C.NC} Session not found")
+    return False
+
+def clear_sessions():
+    """Delete all sessions"""
+    sessions = list_sessions()
+    count = 0
+    for s in sessions:
+        try:
+            os.remove(s['file'])
+            count += 1
+        except:
+            pass
+    
+    # Remove current session marker
+    if CURRENT_SESSION_FILE.exists():
+        os.remove(CURRENT_SESSION_FILE)
+    
+    print(f" {C.GREEN}✓{C.NC} Cleared {count} sessions")
+
+def get_current_session():
+    """Get current session ID"""
+    if CURRENT_SESSION_FILE.exists():
+        with open(CURRENT_SESSION_FILE, 'r') as f:
+            session_id = f.read().strip()
+            session_file = SESSIONS_DIR / f"{session_id}.json"
+            if session_file.exists():
+                return session_id
+    return None
+
+def add_message(role, content, model=None):
+    """Add message to current session"""
+    session_id = get_current_session()
+    if not session_id:
+        session_id = create_session()
+    
+    session_file = SESSIONS_DIR / f"{session_id}.json"
+    
+    with open(session_file, 'r') as f:
+        session = json.load(f)
+    
+    session['messages'].append({
+        'role': role,
+        'content': content,
+        'timestamp': get_timestamp()
+    })
+    session['updated'] = get_timestamp()
+    
+    if model:
+        session['model'] = model
+    
+    with open(session_file, 'w') as f:
+        json.dump(session, f, indent=2)
+
+def get_session_history():
+    """Get messages from current session for context"""
+    session_id = get_current_session()
+    if not session_id:
+        return []
+    
+    session_file = SESSIONS_DIR / f"{session_id}.json"
+    if not session_file.exists():
+        return []
+    
+    with open(session_file, 'r') as f:
+        session = json.load(f)
+    
+    return session.get('messages', [])
+
+def rename_session(index_or_id, new_name):
+    """Rename a session"""
+    sessions = list_sessions()
+    session_file = None
+    
+    # Try as index
+    try:
+        idx = int(index_or_id) - 1
+        if 0 <= idx < len(sessions):
+            session_file = sessions[idx]['file']
+    except ValueError:
+        pass
+    
+    # Try as ID
+    if not session_file:
+        for s in sessions:
+            if s['id'] == index_or_id:
+                session_file = s['file']
+                break
+    
+    if session_file:
+        with open(session_file, 'r') as f:
+            session = json.load(f)
+        session['name'] = new_name
+        session['updated'] = get_timestamp()
+        with open(session_file, 'w') as f:
+            json.dump(session, f, indent=2)
+        print(f" {C.GREEN}✓{C.NC} Renamed to: {C.CYAN}{new_name}{C.NC}")
+        return True
+    
+    print(f" {C.RED}✗{C.NC} Session not found")
+    return False
+
+def show_session(index_or_id):
+    """Show session contents"""
+    sessions = list_sessions()
+    session_file = None
+    
+    # Try as index
+    try:
+        idx = int(index_or_id) - 1
+        if 0 <= idx < len(sessions):
+            session_file = sessions[idx]['file']
+    except ValueError:
+        pass
+    
+    # Try as ID
+    if not session_file:
+        for s in sessions:
+            if s['id'] == index_or_id:
+                session_file = s['file']
+                break
+    
+    if session_file:
+        with open(session_file, 'r') as f:
+            session = json.load(f)
+        
+        print(f"\n{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
+        print(f" {C.WHITE}{session['name']}{C.NC}")
+        print(f" {C.GRAY}ID: {session['id']} | Model: {session['model']}{C.NC}")
+        print(f" {C.GRAY}Created: {session['created']} | Updated: {session['updated']}{C.NC}")
+        print(f"{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
+        print()
+        
+        for msg in session.get('messages', []):
+            role = msg['role']
+            content = msg['content'][:200] + ('...' if len(msg['content']) > 200 else '')
+            timestamp = msg.get('timestamp', '')
+            
+            if role == 'user':
+                print(f"  {C.GREEN}You{C.NC} {C.GRAY}[{timestamp}]{C.NC}")
+                print(f"  {content}")
+            else:
+                print(f"  {C.CYAN}AI{C.NC} {C.GRAY}[{timestamp}]{C.NC}")
+                print(f"  {content}")
+            print()
+        
+        return True
+    
+    print(f" {C.RED}✗{C.NC} Session not found")
+    return False
+
+def interactive_session():
+    """Interactive session selector - show list, pick, show history, continue chat"""
+    sessions = list_sessions()
+    
+    print(f"\n{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
+    print(f" {C.WHITE}CHAT SESSIONS{C.NC}")
+    print(f"{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
+    print()
+    
+    if not sessions:
+        print(f"  {C.GRAY}No sessions found{C.NC}")
+        print(f"\n  {C.WHITE}[n]{C.NC} Start new chat")
+        print(f"  {C.WHITE}[q]{C.NC} Back to menu")
+        print()
+        choice = input(f"  Select: ").strip().lower()
+        if choice == 'n':
+            create_session()
+            start_chat()
+        return
+    
+    for i, s in enumerate(sessions[:10], 1):
+        print(f"  {C.WHITE}[{i}]{C.NC} {C.CYAN}{s['name'][:40]}{C.NC}")
+        print(f"      {C.GRAY}{s['messages']} messages | {s['updated']}{C.NC}")
+        print()
+    
+    print(f"{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
+    print(f"  {C.WHITE}[1-{len(sessions[:10])}]{C.NC} Load & continue session")
+    print(f"  {C.WHITE}[n]{C.NC} Start new chat")
+    print(f"  {C.WHITE}[q]{C.NC} Back to menu")
+    print()
+    
+    choice = input(f"  Select: ").strip().lower()
+    
+    if choice == 'q' or choice == '':
+        return
+    
+    if choice == 'n':
+        name = input(f"  Session name (Enter for auto): ").strip()
+        create_session(name if name else None)
+        start_chat()
+        return
+    
+    try:
+        idx = int(choice) - 1
+        if 0 <= idx < len(sessions):
+            session = sessions[idx]
+            # Load the session
+            with open(CURRENT_SESSION_FILE, 'w') as f:
+                f.write(session['id'])
+            
+            # Show history
+            print(f"\n{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
+            print(f" {C.WHITE}Loaded: {session['name']}{C.NC}")
+            print(f"{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
+            
+            with open(session['file'], 'r') as f:
+                data = json.load(f)
+            
+            # Show last few messages
+            messages = data.get('messages', [])[-6:]  # Last 6 messages
+            if messages:
+                print(f"\n  {C.GRAY}--- Recent History ---{C.NC}\n")
+                for msg in messages:
+                    role = msg['role']
+                    content = msg['content'][:150] + ('...' if len(msg['content']) > 150 else '')
+                    if role == 'user':
+                        print(f"  {C.GREEN}You:{C.NC} {content}")
+                    else:
+                        print(f"  {C.CYAN}AI:{C.NC} {content}")
+                    print()
+            
+            print(f"{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
+            print(f"  {C.GREEN}Session loaded! Continue chatting...{C.NC}")
+            print()
+            
+            # Start chat
+            start_chat()
+        else:
+            print(f" {C.RED}✗{C.NC} Invalid selection")
+    except ValueError:
+        print(f" {C.RED}✗{C.NC} Invalid input")
+
+def start_chat():
+    """Start the AI chat using the ai wrapper"""
+    import subprocess
+    ai_wrapper = DEGENI_HOME / "bin" / "ai"
+    subprocess.run(['bash', str(ai_wrapper)])
+
+def main():
+    ensure_dirs()
+    
+    if len(sys.argv) < 2:
+        interactive_session()
+        return
+    
+    cmd = sys.argv[1].lower()
+    
+    if cmd in ['list', 'ls', 'l']:
+        print_sessions()
+    
+    elif cmd in ['new', 'n', 'create']:
+        name = ' '.join(sys.argv[2:]) if len(sys.argv) > 2 else None
+        create_session(name)
+    
+    elif cmd in ['load', 'open', 'o']:
+        if len(sys.argv) < 3:
+            print(f" {C.RED}✗{C.NC} Usage: degeni session load <number or id>")
+        else:
+            load_session(sys.argv[2])
+    
+    elif cmd in ['delete', 'del', 'rm', 'd']:
+        if len(sys.argv) < 3:
+            print(f" {C.RED}✗{C.NC} Usage: degeni session delete <number or id>")
+        else:
+            delete_session(sys.argv[2])
+    
+    elif cmd in ['clear', 'reset']:
+        confirm = input(f" {C.YELLOW}Delete ALL sessions? [y/N]: {C.NC}").strip().lower()
+        if confirm == 'y':
+            clear_sessions()
+        else:
+            print(" Cancelled")
+    
+    elif cmd in ['rename', 'name']:
+        if len(sys.argv) < 4:
+            print(f" {C.RED}✗{C.NC} Usage: degeni session rename <number> <new name>")
+        else:
+            rename_session(sys.argv[2], ' '.join(sys.argv[3:]))
+    
+    elif cmd in ['show', 'view', 'cat']:
+        if len(sys.argv) < 3:
+            print(f" {C.RED}✗{C.NC} Usage: degeni session show <number or id>")
+        else:
+            show_session(sys.argv[2])
+    
+    elif cmd in ['current', 'cur']:
+        session_id = get_current_session()
+        if session_id:
+            print(f" Current session: {C.CYAN}{session_id}{C.NC}")
+        else:
+            print(f" {C.GRAY}No active session{C.NC}")
+    
+    elif cmd == 'add':
+        # Internal use: add message
+        if len(sys.argv) >= 4:
+            role = sys.argv[2]
+            content = ' '.join(sys.argv[3:])
+            add_message(role, content)
+    
+    elif cmd == 'history':
+        # Internal use: get history for context
+        history = get_session_history()
+        print(json.dumps(history))
+    
+    else:
+        print(f" {C.RED}✗{C.NC} Unknown command: {cmd}")
+        print_sessions()
+
+if __name__ == '__main__':
+    main()
