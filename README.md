@@ -23,6 +23,41 @@
 
 ---
 
+## ⚠️ DISCLAIMER
+
+**IMPORTANT - READ BEFORE USE:**
+
+This tool is provided **for educational and personal use only**. By using DEGENI, you acknowledge and accept the following:
+
+### Legal & ToS Considerations:
+
+| Aspect | Status | Notes |
+|--------|--------|-------|
+| **Criminal Law** | ✅ Legal | No hacking or unauthorized access |
+| **Google AI ToS** | ⚠️ **Gray Area** | Using API via proxy may violate Terms of Service |
+| **Anthropic ToS** | ⚠️ **Gray Area** | Redirecting Claude Code to custom endpoints may violate ToS |
+| **Antigravity Service** | ⚠️ **Unofficial** | Third-party service, not endorsed by Google or Anthropic |
+
+### Potential Risks:
+
+- 🚫 **Account Suspension** - Your Google AI account may be suspended or banned
+- 🚫 **Service Termination** - Antigravity service may shut down without notice
+- 🚫 **Rate Limiting** - Accounts may be permanently rate-limited
+- 🚫 **Data Loss** - Sessions and configurations may be lost at any time
+- 🚫 **No Warranty** - Tool provided "AS IS" without any guarantees
+
+### Recommendations:
+
+- ✅ **Personal Use Only** - Do NOT use for production or commercial purposes
+- ✅ **Educational Purposes** - Treat as a learning/experimental project
+- ✅ **Backup Plans** - Have alternative solutions ready
+- ✅ **Read Official ToS** - Review Google AI and Anthropic Terms of Service
+- ✅ **Consider Official Services** - For reliable access, consider [Claude Pro](https://claude.ai/pro) ($20/month)
+
+**USE AT YOUR OWN RISK. The developers are not responsible for any account suspensions, service disruptions, or ToS violations.**
+
+---
+
 ## ✨ What is DEGENI?
 
 **DEGENI** adalah CLI wrapper tool yang memungkinkan Anda menjalankan **Claude Code** (official CLI dari Anthropic) menggunakan **Gemini Claude models** melalui **Antigravity proxy**.
