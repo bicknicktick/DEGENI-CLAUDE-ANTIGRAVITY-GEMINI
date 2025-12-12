@@ -280,6 +280,30 @@ Dashboard menggunakan backend API untuk real-time data:
 
 ## 🔧 Troubleshooting
 
+### Error: `$'\r': command not found` (Line Ending Issue)
+
+**Cause:** Windows-style line endings (CRLF) instead of Unix-style (LF).
+
+**Quick Fix:**
+```bash
+# Option 1: Using dos2unix
+sudo apt-get install dos2unix  # or: brew install dos2unix
+dos2unix install.sh
+bash install.sh
+
+# Option 2: Using sed
+sed -i 's/\r$//' install.sh
+bash install.sh
+
+# Option 3: Re-clone with correct settings
+git config --global core.autocrlf false
+git clone https://github.com/bicknicktick/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI.git
+```
+
+**For more details, see:** [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+
+---
+
 ### Error: `auth_unavailable`
 
 ```bash

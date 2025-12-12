@@ -1,0 +1,21 @@
+# Enforce LF line endings for all text files to prevent CRLF issues
+# This is critical for shell scripts on Linux/Mac systems
+
+# Shell scripts must use LF
+*.sh text eol=lf
+
+# Python scripts must use LF
+*.py text eol=lf
+
+# All text files should use LF by default
+* text=auto eol=lf
+
+# Explicitly set binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.tar.gz binary
+*.zip binary
