@@ -191,10 +191,24 @@ if ($Arguments.Count -eq 0) {
 }
 
 # Launch Claude Code CLI
-$CLAUDE_EXE = "C:\Users\Amrem\.local\bin\claude.exe"
+$CLAUDE_EXE = $null
 
-if (-not (Test-Path $CLAUDE_EXE)) {
-    # Fallback: try to find claude in PATH (excluding our wrapper)
+# Priority 1: Check standard NPM global path
+$NPM_CLAUDE = Join-Path $env:APPDATA "npm\claude.cmd"
+if (Test-Path $NPM_CLAUDE) {
+    $CLAUDE_EXE = $NPM_CLAUDE
+}
+
+# Priority 2: Check .local/bin (Standalone installer)
+if (-not $CLAUDE_EXE) {
+    $LOCAL_CLAUDE = "C:\Users\Amrem\.local\bin\claude.exe"
+    if (Test-Path $LOCAL_CLAUDE) {
+        $CLAUDE_EXE = $LOCAL_CLAUDE
+    }
+}
+
+# Priority 3: Fallback to PATH search (excluding wrapper)
+if (-not $CLAUDE_EXE) {
     $allClaudes = where.exe claude
     $CLAUDE_EXE = ($allClaudes | Where-Object { $_ -notlike "*DEGENI*" }) | Select-Object -First 1
 }
