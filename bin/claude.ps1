@@ -25,7 +25,7 @@ param(
 # ============================================================
 $SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
 $DEGENI_HOME = Split-Path -Parent $SCRIPT_DIR
-$CONFIG_FILE = Join-Path $DEGENI_HOME "config.json"
+$CONFIG_FILE = Join-Path $DEGENI_HOME "config\config.json"
 
 if (Test-Path $CONFIG_FILE) {
     try {
@@ -169,14 +169,15 @@ $env:ANTHROPIC_BASE_URL = $PROXY_URL
 $env:ANTHROPIC_API_KEY = "sk-ycY2nDJ7VvvnWPnYEAf3pc84n9sdDQFjD8tb8nlb2f7Du"
 
 # Set default model if not already set
-if (-not $env:ANTHROPIC_MODEL) {
-    if ($env:DEGENI_DEFAULT_MODEL) {
-        $env:ANTHROPIC_MODEL = $env:DEGENI_DEFAULT_MODEL
-    }
-    else {
-        $env:ANTHROPIC_MODEL = $DEFAULT_MODEL
-    }
+# Determine model
+$targetModel = $DEFAULT_MODEL
+
+if ($env:DEGENI_DEFAULT_MODEL) {
+    $targetModel = $env:DEGENI_DEFAULT_MODEL
 }
+
+# Force update ANTHROPIC_MODEL to ensure the correct one is used
+$env:ANTHROPIC_MODEL = $targetModel
 
 if ($Arguments.Count -eq 0) {
     Write-ColorOutput "[*] Using model: $($env:ANTHROPIC_MODEL)" "Magenta"

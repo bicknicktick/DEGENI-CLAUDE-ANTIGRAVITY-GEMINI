@@ -14,10 +14,12 @@ $BIN_DIR = $SCRIPT_DIR
 $PROXY_EXE = Join-Path $BIN_DIR "cli-proxy-api.exe"
 $PROXY_DIR = Join-Path $env:USERPROFILE "cliproxyapi"
 $AUTH_DIR = Join-Path $env:USERPROFILE ".cli-proxy-api"
-$CONFIG_FILE = Join-Path $DEGENI_HOME "config.json"
+$CONFIG_FILE = Join-Path $DEGENI_HOME "config\config.json"
 $LOGS_DIR = Join-Path $DEGENI_HOME "logs"
+$CONFIG_DIR = Join-Path $DEGENI_HOME "config"
 
 if (-not (Test-Path $LOGS_DIR)) { New-Item -ItemType Directory -Path $LOGS_DIR -Force | Out-Null }
+if (-not (Test-Path $CONFIG_DIR)) { New-Item -ItemType Directory -Path $CONFIG_DIR -Force | Out-Null }
 if (-not (Test-Path $PROXY_DIR)) { New-Item -ItemType Directory -Path $PROXY_DIR -Force | Out-Null }
 
 function Draw-Line {
