@@ -124,6 +124,28 @@ cd DEGENI
 bash install.sh
 ```
 
+### 🪟 Method 3: Windows Native (NEW!)
+
+**No WSL required!** Run directly in PowerShell or CMD:
+
+```powershell
+# 1. Clone repository
+git clone https://github.com/bicknicktick/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI.git
+cd DEGENI-CLAUDE-ANTIGRAVITY-GEMINI
+
+# 2. Run Windows installer
+.\install-windows.ps1
+
+# 3. Authenticate (first time only)
+.\bin\cli-proxy-api.exe
+# → Login with Google in browser
+
+# 4. Use Claude from anywhere!
+claude "hello world"
+```
+
+📖 **Full guide**: [WINDOWS-SETUP.md](WINDOWS-SETUP.md)
+
 ### After Installation (Both Methods)
 
 ```bash
