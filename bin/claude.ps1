@@ -162,8 +162,14 @@ else {
 Remove-Item Env:ANTHROPIC_AUTH_TOKEN -ErrorAction SilentlyContinue
 Remove-Item Env:ANTHROPIC_API_KEY -ErrorAction SilentlyContinue
 
-# Now set our proxy URL
-$env:ANTHROPIC_BASE_URL = $PROXY_URL
+# Now set our proxy URL (unless updating)
+if ($Arguments -contains "update") {
+    Write-ColorOutput "[!] Update command detected: Bypassing proxy to allow connection to Anthropic servers." "Yellow"
+    Remove-Item Env:ANTHROPIC_BASE_URL -ErrorAction SilentlyContinue
+}
+else {
+    $env:ANTHROPIC_BASE_URL = $PROXY_URL
+}
 
 # Set the Antigravity API key (used by existing working scripts)
 $env:ANTHROPIC_API_KEY = "sk-ycY2nDJ7VvvnWPnYEAf3pc84n9sdDQFjD8tb8nlb2f7Du"
