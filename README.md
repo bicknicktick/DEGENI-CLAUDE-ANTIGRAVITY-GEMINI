@@ -29,18 +29,6 @@
 
 This tool is provided **for educational and personal use only**. By using DEGENI, you acknowledge and accept the following:
 
-### 🔒 SECURITY NOTICE (CRITICAL)
-
-**If you cloned this repository before commit `7da41eb` (Jan 23, 2026), please RE-CLONE immediately:**
-
-```bash
-# Delete old clone and re-clone fresh
-rm -rf DEGENI-CLAUDE-ANTIGRAVITY-GEMINI
-git clone https://github.com/bicknicktick/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI.git
-```
-
-**Reason:** Previous versions contained hardcoded API keys that have been removed for security.
-
 ### Legal & ToS Considerations:
 
 | Aspect | Status | Notes |
