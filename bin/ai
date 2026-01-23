@@ -1,0 +1,192 @@
+#!/bin/bash
+#═══════════════════════════════════════════════════════════════════════════════
+#  DEGENI AI Wrapper with Session Support
+#  by BITZY.ID
+#═══════════════════════════════════════════════════════════════════════════════
+
+DEGENI_HOME="$HOME/DEGENI"
+PROXY_DIR="$HOME/cliproxyapi"
+SESSION_MGR="$DEGENI_HOME/bin/degeni-session"
+CONFIG_FILE="$DEGENI_HOME/config/model.conf"
+
+# Colors
+C='\033[0;36m'
+G='\033[0;32m'
+Y='\033[1;33m'
+W='\033[1;37m'
+D='\033[0;90m'
+NC='\033[0m'
+
+# Get current model from config
+get_model() {
+    if [ -f "$CONFIG_FILE" ]; then
+        grep "^MODEL=" "$CONFIG_FILE" | cut -d'=' -f2
+    else
+        echo "gemini-claude-sonnet-4-5-thinking"
+    fi
+}
+
+# Export environment
+export ANTHROPIC_BASE_URL=http://127.0.0.1:8317
+export ANTHROPIC_AUTH_TOKEN=$(grep -A1 "api-keys:" $PROXY_DIR/config.yaml | tail -1 | sed 's/.*"\(sk-[^"]*\)".*/\1/' || echo "sk-default")
+export ANTHROPIC_DEFAULT_SONNET_MODEL=gemini-claude-opus-4-5-thinking
+export ANTHROPIC_DEFAULT_OPUS_MODEL=gemini-claude-opus-4-5-thinking
+
+# Handle special commands
+case "$1" in
+    /sessions|/session|/s)
+        shift
+        python3 "$SESSION_MGR" "$@"
+        exit 0
+        ;;
+    /new)
+        shift
+        python3 "$SESSION_MGR" new "$@"
+        echo ""
+        exec "$0"  # Restart in chat mode
+        ;;
+    /load)
+        shift
+        python3 "$SESSION_MGR" load "$@"
+        echo ""
+        exec "$0"  # Restart in chat mode
+        ;;
+    /clear)
+        python3 "$SESSION_MGR" clear
+        exit 0
+        ;;
+    /history|/h)
+        python3 "$SESSION_MGR" show current
+        exit 0
+        ;;
+    /help|/?)
+        echo ""
+        echo -e "${C}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e " ${W}DEGENI Session Commands${NC}"
+        echo -e "${C}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo ""
+        echo -e "  ${G}/sessions${NC}        - List all saved sessions"
+        echo -e "  ${G}/new [name]${NC}     - Start new session"
+        echo -e "  ${G}/load <num>${NC}     - Load session by number"
+        echo -e "  ${G}/history${NC}        - Show current session history"
+        echo -e "  ${G}/clear${NC}          - Clear all sessions"
+        echo -e "  ${G}/help${NC}           - Show this help"
+        echo ""
+        echo -e "  ${D}Or type your question directly!${NC}"
+        echo ""
+        exit 0
+        ;;
+esac
+
+# Function to save message to session
+save_to_session() {
+    local role="$1"
+    local content="$2"
+    python3 "$SESSION_MGR" add "$role" "$content" 2>/dev/null
+}
+
+# Check if interactive mode (no arguments)
+if [ $# -eq 0 ]; then
+    # Show session info
+    CURRENT=$(python3 "$SESSION_MGR" current 2>/dev/null | grep -o '[0-9_]*' | head -1)
+    
+    echo ""
+    echo -e "${C}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " ${W}DEGENI AI Chat${NC} ${D}by BITZY.ID${NC}"
+    if [ -n "$CURRENT" ]; then
+        echo -e " ${D}Session: $CURRENT${NC}"
+    else
+        echo -e " ${D}New session will be created${NC}"
+    fi
+    echo -e "${C}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " ${D}Commands: /sessions /new /load /history /help${NC}"
+    echo -e " ${D}Type 'exit' or Ctrl+C to quit${NC}"
+    echo -e "${C}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    
+    # Create new session if none active
+    if [ -z "$CURRENT" ]; then
+        python3 "$SESSION_MGR" new "Chat $(date '+%Y-%m-%d %H:%M')" > /dev/null 2>&1
+    fi
+    
+    # Interactive loop
+    while true; do
+        echo -ne "${G}You → ${NC}"
+        read -r user_input
+        
+        # Check for exit
+        if [ -z "$user_input" ]; then
+            continue
+        fi
+        
+        if [ "$user_input" = "exit" ] || [ "$user_input" = "quit" ] || [ "$user_input" = "/exit" ] || [ "$user_input" = "/quit" ]; then
+            echo -e "\n${D}Session saved. Goodbye!${NC}\n"
+            break
+        fi
+        
+        # Handle commands
+        case "$user_input" in
+            /sessions|/session|/s)
+                python3 "$SESSION_MGR" list
+                continue
+                ;;
+            /new*)
+                name=$(echo "$user_input" | sed 's/^\/new *//')
+                python3 "$SESSION_MGR" new "$name"
+                continue
+                ;;
+            /load*)
+                num=$(echo "$user_input" | sed 's/^\/load *//')
+                python3 "$SESSION_MGR" load "$num"
+                continue
+                ;;
+            /history|/h)
+                CURRENT=$(python3 "$SESSION_MGR" current 2>/dev/null | grep -o '[0-9_]*' | head -1)
+                [ -n "$CURRENT" ] && python3 "$SESSION_MGR" show "$CURRENT"
+                continue
+                ;;
+            /clear)
+                python3 "$SESSION_MGR" clear
+                continue
+                ;;
+            /help|/?)
+                echo ""
+                echo -e "  ${G}/sessions${NC}     - List saved sessions"
+                echo -e "  ${G}/new [name]${NC}  - New session"
+                echo -e "  ${G}/load <num>${NC}  - Load session"
+                echo -e "  ${G}/history${NC}     - Show history"
+                echo -e "  ${G}/clear${NC}       - Clear all"
+                echo -e "  ${G}exit${NC}         - Quit"
+                echo ""
+                continue
+                ;;
+        esac
+        
+        # Save user message
+        save_to_session "user" "$user_input"
+        
+        echo ""
+        echo -e "${C}AI → ${NC}"
+        
+        # Get AI response with model flag
+        response=$(claude --model "$(get_model)" -p "$user_input" 2>&1)
+        echo "$response"
+        echo ""
+        
+        # Save AI response
+        save_to_session "assistant" "$response"
+    done
+else
+    # Quick ask mode - single question
+    query="$*"
+    
+    # Save to session
+    save_to_session "user" "$query"
+    
+    # Get response with model flag
+    response=$(claude --model "$(get_model)" -p "$query" 2>&1)
+    echo "$response"
+    
+    # Save response
+    save_to_session "assistant" "$response"
+fi

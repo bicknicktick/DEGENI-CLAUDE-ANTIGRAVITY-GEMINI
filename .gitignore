@@ -1,0 +1,65 @@
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Sessions (contains user data)
+sessions/*.json
+!sessions/.gitkeep
+
+# Config files with credentials
+config/*.conf
+!config/config.yaml
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*
+
+# SSH keys and credentials
+*.pem
+*.key
+id_*
+*_key
+*.zip
+
+# User-specific files
+*.bak
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Archives
+*.tar.gz
+*.zip
+*.rar
+
+# API Keys and Secrets (CRITICAL SECURITY)
+**/sk-*
+**/*api*key*
+**/*token*
+**/*secret*
+**/credentials*
+**/auth*
+**/*password*
+**/.env*
+
+# Proxy configs with sensitive data
+cliproxyapi/
+.cli-proxy-api/

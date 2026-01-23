@@ -1,0 +1,94 @@
+#!/bin/bash
+# Smart handler for auth_unavailable errors
+
+DEGENI_HOME="$HOME/DEGENI"
+PROXY_DIR="$HOME/cliproxyapi"
+AUTH_DIR="$HOME/.cli-proxy-api"
+
+# Check if all accounts are suspended
+check_all_suspended() {
+    local suspended_count=0
+    local total_count=$(ls $AUTH_DIR/antigravity-*.json 2>/dev/null | wc -l)
+    
+    for account in $AUTH_DIR/antigravity-*.json; do
+        if [ -f "$account" ]; then
+            # Test individual account
+            local email=$(basename "$account" | sed 's/antigravity-//' | sed 's/.json//')
+            local test_result=$(timeout 10 curl -s -X POST http://localhost:8317/v1/messages \
+                -H "x-api-key: $(grep -A1 'api-keys:' $PROXY_DIR/config.yaml | tail -1 | sed 's/.*\"\(sk-[^\"]*\)\".*/\1/')" \
+                -H "Content-Type: application/json" \
+                -H "anthropic-version: 2023-06-01" \
+                -d "{\"model\":\"gemini-claude-sonnet-4-5-thinking\",\"max_tokens\":5,\"messages\":[{\"role\":\"user\",\"content\":\"test\"}]}" 2>&1)
+            
+            if echo "$test_result" | grep -q "429\|rate.limit\|quota"; then
+                ((suspended_count++))
+            fi
+        fi
+    done
+    
+    [ "$suspended_count" -eq "$total_count" ] && return 0 || return 1
+}
+
+# Auto-switch to free model when all accounts limited
+auto_switch_model() {
+    echo "🔄 All accounts rate limited, switching to free model..."
+    
+    # Switch to free model
+    mkdir -p "$DEGENI_HOME/config"
+    echo "MODEL=gemini-3-pro-preview" > "$DEGENI_HOME/config/model.conf"
+    
+    # Update ai script
+    if [ -f "$DEGENI_HOME/bin/ai" ]; then
+        sed -i "s/ANTHROPIC_DEFAULT_SONNET_MODEL=.*/ANTHROPIC_DEFAULT_SONNET_MODEL=gemini-3-pro-preview/g" "$DEGENI_HOME/bin/ai"
+        sed -i "s/ANTHROPIC_DEFAULT_OPUS_MODEL=.*/ANTHROPIC_DEFAULT_OPUS_MODEL=gemini-3-pro-preview/g" "$DEGENI_HOME/bin/ai"
+    fi
+    
+    echo "✅ Switched to gemini-3-pro-preview (free model)"
+    return 0
+}
+
+# Smart retry with exponential backoff
+smart_retry() {
+    local max_retries=3
+    local retry_count=0
+    local wait_time=5
+    
+    while [ $retry_count -lt $max_retries ]; do
+        echo "🔄 Retry $((retry_count + 1))/$max_retries..."
+        
+        # Restart proxy
+        pkill -9 cli-proxy-api 2>/dev/null
+        sleep 2
+        cd "$PROXY_DIR"
+        nohup ./cli-proxy-api > cliproxyapi.log 2>&1 &
+        sleep 3
+        
+        # Test if working
+        local test_result=$(timeout 10 curl -s -X POST http://localhost:8317/v1/messages \
+            -H "x-api-key: $(grep -A1 'api-keys:' $PROXY_DIR/config.yaml | tail -1 | sed 's/.*\"\(sk-[^\"]*\)\".*/\1/')" \
+            -H "Content-Type: application/json" \
+            -H "anthropic-version: 2023-06-01" \
+            -d '{"model":"gemini-claude-sonnet-4-5-thinking","max_tokens":5,"messages":[{"role":"user","content":"test"}]}' 2>&1)
+        
+        if echo "$test_result" | grep -q "content\|text"; then
+            echo "✅ Recovery successful!"
+            return 0
+        fi
+        
+        ((retry_count++))
+        echo "⏳ Waiting ${wait_time}s before retry..."
+        sleep $wait_time
+        wait_time=$((wait_time * 2))  # Exponential backoff
+    done
+    
+    echo "❌ All retries failed, switching to fallback model..."
+    auto_switch_model
+}
+
+# Main handler
+case "$1" in
+    "check") check_all_suspended && echo "All suspended" || echo "Some working" ;;
+    "auto-fix") smart_retry ;;
+    "switch") auto_switch_model ;;
+    *) echo "Usage: $0 {check|auto-fix|switch}" ;;
+esac
