@@ -60,6 +60,8 @@ class DEGENIHandler(BaseHTTPRequestHandler):
             self.get_status()
         elif path == '/api/accounts':
             self.get_accounts()
+        elif path == '/api/usage':
+            self.get_usage()
         elif path == '/api/models':
             self.get_models()
         elif path == '/api/logs':
@@ -205,6 +207,97 @@ class DEGENIHandler(BaseHTTPRequestHandler):
                 })
         
         self.send_json({'accounts': accounts})
+    
+    def get_usage(self):
+        """Get usage data per account with reset time"""
+        import re
+        from datetime import datetime, timedelta
+        
+        usage_data = []
+        total_requests = 0
+        
+        # Get all active accounts
+        accounts = []
+        for f in glob.glob(os.path.join(AUTH_DIR, 'antigravity-*.json')):
+            filename = os.path.basename(f)
+            email = filename.replace('antigravity-', '').replace('.json', '').replace('_', '@').replace('@gmail@com', '@gmail.com')
+            accounts.append({'email': email, 'filename': filename, 'path': f})
+        
+        # Parse logs for request counts and status
+        log_content = ""
+        if os.path.exists(PROXY_LOG):
+            try:
+                result = subprocess.run(['tail', '-500', PROXY_LOG], capture_output=True, text=True)
+                log_content = result.stdout
+            except:
+                pass
+        
+        for acc in accounts:
+            email = acc['email']
+            email_pattern = email.split('@')[0]  # Match by username part
+            
+            # Count requests for this account (approximate from logs)
+            request_count = log_content.lower().count(email_pattern.lower())
+            if request_count == 0:
+                # Estimate from 200 OK responses roughly
+                request_count = log_content.count('200 |') // max(1, len(accounts))
+            
+            # Check if suspended or limited
+            status = 'available'
+            if f'suspended' in log_content.lower() and email_pattern.lower() in log_content.lower():
+                status = 'suspended'
+            elif 'payment_required' in log_content.lower() or 'quota' in log_content.lower():
+                if email_pattern.lower() in log_content.lower():
+                    status = 'limited'
+            
+            # Calculate usage percentage (daily limit ~500 requests estimate)
+            daily_limit = 500
+            percent = min(100, int((request_count / daily_limit) * 100))
+            
+            # Get last used time from logs
+            last_used = '-'
+            for line in log_content.split('\n')[-100:]:
+                if email_pattern.lower() in line.lower() or '200 |' in line:
+                    time_match = re.search(r'\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]', line)
+                    if time_match:
+                        last_used = time_match.group(1).split(' ')[1]
+            
+            total_requests += request_count
+            
+            usage_data.append({
+                'email': email,
+                'requests_today': request_count,
+                'limit': daily_limit,
+                'percent': percent,
+                'status': status,
+                'last_used': last_used
+            })
+        
+        # Calculate next reset time (07:00 WIB = 00:00 UTC)
+        now = datetime.now()
+        reset_hour = 7  # 07:00 WIB
+        if now.hour >= reset_hour:
+            next_reset = (now + timedelta(days=1)).replace(hour=reset_hour, minute=0, second=0, microsecond=0)
+        else:
+            next_reset = now.replace(hour=reset_hour, minute=0, second=0, microsecond=0)
+        
+        hours_until_reset = int((next_reset - now).total_seconds() / 3600)
+        minutes_until_reset = int(((next_reset - now).total_seconds() % 3600) / 60)
+        
+        # Sort by usage (lowest first for smart rotation)
+        usage_data.sort(key=lambda x: (x['status'] != 'available', x['percent']))
+        
+        # Smart suggestion
+        available_accounts = [a for a in usage_data if a['status'] == 'available']
+        suggestion = available_accounts[0]['email'] if available_accounts else None
+        
+        self.send_json({
+            'accounts': usage_data,
+            'total_requests': total_requests,
+            'next_reset': next_reset.strftime('%Y-%m-%d %H:%M WIB'),
+            'reset_countdown': f'{hours_until_reset}h {minutes_until_reset}m',
+            'suggestion': suggestion
+        })
     
     def get_models(self):
         """Get available models from proxy API"""

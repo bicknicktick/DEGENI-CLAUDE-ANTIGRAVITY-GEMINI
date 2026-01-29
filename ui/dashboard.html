@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,9 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg: #09090b;
@@ -24,100 +27,768 @@
             --purple: #8b5cf6;
             --ease: cubic-bezier(0.23, 1, 0.32, 1);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--primary); min-height: 100vh; line-height: 1.5; }
-        .bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 15% 15%, rgba(6, 182, 212, 0.03) 0%, transparent 40%), radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.03) 0%, transparent 40%); pointer-events: none; z-index: 0; }
-        .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; position: relative; z-index: 1; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 40px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
-        .logo { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.03em; color: #fff; display: flex; align-items: center; gap: 10px; }
-        .logo::before { content: ''; display: block; width: 12px; height: 12px; background: var(--cyan); border-radius: 2px; box-shadow: 0 0 10px rgba(6, 182, 212, 0.3); }
-        .subtitle { color: var(--subtext); margin-top: 8px; font-size: 0.95rem; }
-        .brand { color: #fff; font-weight: 500; text-decoration: none; border-bottom: 1px dotted var(--subtext); }
-        .live-badge { background: var(--green); color: #000; padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; display: flex; align-items: center; gap: 6px; animation: pulse-bg 2s infinite; }
-        @keyframes pulse-bg { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; }
-        .card:nth-of-type(1) { grid-column: span 5; }
-        .card:nth-of-type(2) { grid-column: span 7; }
-        .card:nth-of-type(3) { grid-column: span 6; }
-        .card:nth-of-type(4) { grid-column: span 6; }
-        .card:nth-of-type(5) { grid-column: span 12; }
-        @media (max-width: 1024px) { .card:nth-of-type(1), .card:nth-of-type(2) { grid-column: span 12; } }
-        @media (max-width: 768px) { .grid { display: flex; flex-direction: column; } .header { flex-direction: column; gap: 16px; } }
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: all 0.4s var(--ease); }
-        .card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
-        .card h3 { font-size: 0.875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--subtext); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-        .icon { width: 18px; height: 18px; stroke-width: 2; stroke: currentColor; fill: none; }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .stat-box { background: rgba(255,255,255,0.02); padding: 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); }
-        .stat-val { font-size: 1.5rem; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
-        .status-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); animation: pulse 2s infinite; }
-        .status-dot.offline { background: var(--red); animation: none; }
-        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
-        .stat-lbl { color: var(--subtext); font-size: 0.8rem; margin-top: 4px; }
-        .btn-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-        .btn { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: #fff; padding: 14px 20px; border-radius: 8px; font-family: inherit; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s var(--ease); display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
-        .btn:hover { background: var(--card-hover); border-color: var(--subtext); }
-        .btn:active { transform: scale(0.98); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn.loading { pointer-events: none; }
-        .btn.loading::after { content: ''; width: 14px; height: 14px; border: 2px solid transparent; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-left: 8px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .btn svg { width: 16px; height: 16px; stroke-width: 2; opacity: 0.8; }
-        .account { display: flex; justify-content: space-between; align-items: center; padding: 16px; margin-bottom: 12px; background: rgba(0,0,0,0.2); border: 1px solid transparent; border-radius: 8px; transition: all 0.2s; }
-        .account:hover { background: rgba(255,255,255,0.02); border-color: var(--border); }
-        .account-info { display: flex; align-items: center; gap: 12px; }
-        .avatar { width: 32px; height: 32px; border-radius: 6px; background: #27272a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; border: 1px solid rgba(255,255,255,0.1); }
-        .avatar.antigravity { background: linear-gradient(135deg, var(--purple), var(--cyan)); }
-        .avatar.gemini { background: linear-gradient(135deg, var(--yellow), var(--green)); }
-        .account h4 { font-size: 0.9rem; font-weight: 500; color: #fff; }
-        .account span { font-size: 0.75rem; color: var(--subtext); display: block; }
-        .badge { font-size: 0.7rem; padding: 4px 8px; border-radius: 4px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-        .badge-active { background: rgba(16, 185, 129, 0.1); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.2); }
-        .badge-disabled { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.2); }
-        .model { padding: 14px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; margin-bottom: 8px; transition: all 0.2s; }
-        .model:hover { background: rgba(255,255,255,0.03); }
-        .model.active { background: rgba(6, 182, 212, 0.05); border-color: rgba(6, 182, 212, 0.3); }
-        .model-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .model h4 { font-size: 0.9rem; font-weight: 500; color: #eee; }
-        .model span { font-size: 0.75rem; color: var(--subtext); font-family: 'JetBrains Mono', monospace; }
-        .tag-active { font-size: 0.65rem; color: var(--cyan); background: rgba(6, 182, 212, 0.1); padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-        .log-container { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; max-height: 200px; overflow-y: auto; color: var(--subtext); }
-        .log-container::-webkit-scrollbar { width: 6px; }
-        .log-container::-webkit-scrollbar-track { background: transparent; }
-        .log-container::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-        .log-entry { padding: 4px 0; border-bottom: 1px dashed rgba(255,255,255,0.05); }
-        .log-entry:last-child { border-bottom: none; }
-        .l-ok { color: var(--green); }
-        .l-warn { color: var(--yellow); }
-        .l-err { color: var(--red); }
-        .footer { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); text-align: center; color: #555; font-size: 0.85rem; }
-        .footer a { color: #777; text-decoration: none; }
-        .footer a:hover { color: #fff; }
-        .toast { position: fixed; bottom: 30px; right: 30px; background: #fff; color: #000; padding: 12px 20px; border-radius: 6px; font-weight: 500; font-size: 0.9rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: translateY(100px); opacity: 0; transition: all 0.4s var(--ease); z-index: 1000; display: flex; align-items: center; gap: 10px; }
-        .toast.show { transform: translateY(0); opacity: 1; }
-        .toast.error { background: var(--red); color: #fff; }
-        .toast.success { background: var(--green); color: #fff; }
-        .no-api { text-align: center; padding: 40px; color: var(--subtext); }
-        .no-api code { background: var(--card); padding: 8px 16px; border-radius: 6px; display: block; margin-top: 16px; }
-        .limit-alert { display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 12px 16px; margin-top: 16px; }
-        .limit-alert.show { display: flex; align-items: center; gap: 12px; animation: shake 0.5s ease-in-out; }
-        .limit-icon { font-size: 1.5rem; animation: pulse-warn 1s infinite; }
-        @keyframes pulse-warn { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        .limit-text { flex: 1; }
-        .limit-text strong { color: var(--red); display: block; margin-bottom: 2px; }
-        .limit-text span { color: var(--subtext); font-size: 0.8rem; }
-        .model.limit { border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.05); }
-        .model.limit .limit-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--red); color: #fff; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-left: 8px; animation: pulse-warn 1s infinite; }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 15% 15%, rgba(6, 182, 212, 0.03) 0%, transparent 40%), radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.03) 0%, transparent 40%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 40px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo::before {
+            content: '';
+            display: block;
+            width: 12px;
+            height: 12px;
+            background: var(--cyan);
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+        }
+
+        .subtitle {
+            color: var(--subtext);
+            margin-top: 8px;
+            font-size: 0.95rem;
+        }
+
+        .brand {
+            color: #fff;
+            font-weight: 500;
+            text-decoration: none;
+            border-bottom: 1px dotted var(--subtext);
+        }
+
+        .live-badge {
+            background: var(--green);
+            color: #000;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            animation: pulse-bg 2s infinite;
+        }
+
+        @keyframes pulse-bg {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+        }
+
+        .card:nth-of-type(1) {
+            grid-column: span 5;
+        }
+
+        .card:nth-of-type(2) {
+            grid-column: span 7;
+        }
+
+        .card:nth-of-type(3) {
+            grid-column: span 6;
+        }
+
+        .card:nth-of-type(4) {
+            grid-column: span 6;
+        }
+
+        .card:nth-of-type(5) {
+            grid-column: span 12;
+        }
+
+        @media (max-width: 1024px) {
+
+            .card:nth-of-type(1),
+            .card:nth-of-type(2) {
+                grid-column: span 12;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.4s var(--ease);
+        }
+
+        .card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h3 {
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--subtext);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon {
+            width: 18px;
+            height: 18px;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .stat-val {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.offline {
+            background: var(--red);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .stat-lbl {
+            color: var(--subtext);
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s var(--ease);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: var(--card-hover);
+            border-color: var(--subtext);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn.loading {
+            pointer-events: none;
+        }
+
+        .btn.loading::after {
+            content: '';
+            width: 14px;
+            height: 14px;
+            border: 2px solid transparent;
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .btn svg {
+            width: 16px;
+            height: 16px;
+            stroke-width: 2;
+            opacity: 0.8;
+        }
+
+        .account {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .account:hover {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: var(--border);
+        }
+
+        .account-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: #27272a;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .avatar.antigravity {
+            background: linear-gradient(135deg, var(--purple), var(--cyan));
+        }
+
+        .avatar.gemini {
+            background: linear-gradient(135deg, var(--yellow), var(--green));
+        }
+
+        .account h4 {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .account span {
+            font-size: 0.75rem;
+            color: var(--subtext);
+            display: block;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .badge-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--green);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .badge-disabled {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .model {
+            padding: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+
+        .model:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .model.active {
+            background: rgba(6, 182, 212, 0.05);
+            border-color: rgba(6, 182, 212, 0.3);
+        }
+
+        .model-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .model h4 {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #eee;
+        }
+
+        .model span {
+            font-size: 0.75rem;
+            color: var(--subtext);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tag-active {
+            font-size: 0.65rem;
+            color: var(--cyan);
+            background: rgba(6, 182, 212, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .log-container {
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            max-height: 200px;
+            overflow-y: auto;
+            color: var(--subtext);
+        }
+
+        .log-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .log-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .log-container::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .l-ok {
+            color: var(--green);
+        }
+
+        .l-warn {
+            color: var(--yellow);
+        }
+
+        .l-err {
+            color: var(--red);
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: #555;
+            font-size: 0.85rem;
+        }
+
+        .footer a {
+            color: #777;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: #fff;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #fff;
+            color: #000;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s var(--ease);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.error {
+            background: var(--red);
+            color: #fff;
+        }
+
+        .toast.success {
+            background: var(--green);
+            color: #fff;
+        }
+
+        .no-api {
+            text-align: center;
+            padding: 40px;
+            color: var(--subtext);
+        }
+
+        .no-api code {
+            background: var(--card);
+            padding: 8px 16px;
+            border-radius: 6px;
+            display: block;
+            margin-top: 16px;
+        }
+
+        .limit-alert {
+            display: none;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 16px;
+        }
+
+        .limit-alert.show {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .limit-icon {
+            font-size: 1.5rem;
+            animation: pulse-warn 1s infinite;
+        }
+
+        @keyframes pulse-warn {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        .limit-text {
+            flex: 1;
+        }
+
+        .limit-text strong {
+            color: var(--red);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .limit-text span {
+            color: var(--subtext);
+            font-size: 0.8rem;
+        }
+
+        .model.limit {
+            border-color: rgba(239, 68, 68, 0.5);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .model.limit .limit-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--red);
+            color: #fff;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+            animation: pulse-warn 1s infinite;
+        }
+
+        /* Usage Tracking Styles */
+        .reset-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: rgba(6, 182, 212, 0.05);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 8px;
+        }
+
+        .reset-label {
+            color: var(--subtext);
+            font-size: 0.8rem;
+        }
+
+        .reset-countdown {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--cyan);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .reset-time {
+            color: var(--subtext);
+            font-size: 0.75rem;
+            margin-left: auto;
+        }
+
+        .usage-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .usage-email {
+            flex: 1;
+            font-size: 0.85rem;
+            color: #fff;
+        }
+
+        .usage-bar-container {
+            width: 100px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .usage-bar {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .usage-bar.low {
+            background: var(--green);
+        }
+
+        .usage-bar.medium {
+            background: var(--yellow);
+        }
+
+        .usage-bar.high {
+            background: var(--red);
+        }
+
+        .usage-percent {
+            font-size: 0.75rem;
+            color: var(--subtext);
+            width: 40px;
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .usage-status {
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .usage-status.available {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--green);
+        }
+
+        .usage-status.limited {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--yellow);
+        }
+
+        .usage-status.suspended {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--red);
+        }
+
+        .suggestion-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+        }
+
+        .suggestion-icon {
+            font-size: 1.2rem;
+        }
+
+        .suggestion-text {
+            font-size: 0.85rem;
+            color: var(--subtext);
+        }
+
+        .suggestion-text strong {
+            color: var(--purple);
+        }
     </style>
 </head>
+
 <body>
     <div class="bg"></div>
     <div class="container">
         <header class="header">
             <div>
                 <div class="logo">DEGENI</div>
-                <div class="subtitle">Claude + Gemini AI Orchestrator &mdash; by <a href="https://bitzy.id" target="_blank" class="brand">BITZY.ID</a></div>
+                <div class="subtitle">Claude + Gemini AI Orchestrator &mdash; by <a href="https://bitzy.id"
+                        target="_blank" class="brand">BITZY.ID</a></div>
             </div>
             <div class="live-badge" id="liveBadge">
                 <span style="width:6px;height:6px;background:#000;border-radius:50%;"></span>
@@ -129,7 +800,10 @@
             <!-- Status Card -->
             <div class="card">
                 <h3>
-                    <svg class="icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                    </svg>
                     System Status
                 </h3>
                 <div class="stat-grid">
@@ -158,20 +832,31 @@
             <!-- Quick Actions -->
             <div class="card">
                 <h3>
-                    <svg class="icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                    </svg>
                     Quick Actions
                 </h3>
                 <div class="btn-group">
                     <button class="btn" id="btnRestart" onclick="restartProxy(this)">
-                        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+                        <svg viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                        </svg>
                         Restart Proxy
                     </button>
                     <button class="btn" id="btnTest" onclick="testConnection(this)">
-                        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" /></svg>
+                        <svg viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+                        </svg>
                         Test Connection
                     </button>
                     <button class="btn" onclick="showToast('Run: degeni add', 'success')">
-                        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                        <svg viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
                         Add Account
                     </button>
                 </div>
@@ -180,7 +865,10 @@
             <!-- Accounts (LIVE) -->
             <div class="card">
                 <h3>
-                    <svg class="icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                    </svg>
                     Registered Accounts
                 </h3>
                 <div id="accountList">
@@ -188,10 +876,36 @@
                 </div>
             </div>
 
+            <!-- Usage Tracking (NEW) -->
+            <div class="card" style="grid-column: span 6;">
+                <h3>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                    </svg>
+                    Usage Tracking
+                </h3>
+                <div class="reset-info" id="resetInfo">
+                    <span class="reset-label">Reset in:</span>
+                    <span class="reset-countdown" id="resetCountdown">--</span>
+                    <span class="reset-time" id="resetTime"></span>
+                </div>
+                <div id="usageList">
+                    <div style="color:var(--subtext);text-align:center;padding:20px;">Loading usage...</div>
+                </div>
+                <div class="suggestion-box" id="suggestionBox" style="display:none;">
+                    <span class="suggestion-icon">💡</span>
+                    <span class="suggestion-text">Recommended: <strong id="suggestedAccount">-</strong></span>
+                </div>
+            </div>
+
             <!-- Model Selector -->
             <div class="card">
                 <h3>
-                    <svg class="icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" /></svg>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+                    </svg>
                     Model Configuration
                 </h3>
                 <div id="modelList">
@@ -202,7 +916,10 @@
             <!-- Activity Log (LIVE) -->
             <div class="card">
                 <h3>
-                    <svg class="icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 9.75L16.5 12l-2.25 2.25m-6 0l2.25-2.25-2.25-2.25M6.75 19.5h10.5c.828 0 1.5-.672 1.5-1.5V6c0-.828-.672-1.5-1.5-1.5H6.75C5.922 4.5 5.25 5.172 5.25 6v12c0 .828.672 1.5 1.5 1.5z" /></svg>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M14.25 9.75L16.5 12l-2.25 2.25m-6 0l2.25-2.25-2.25-2.25M6.75 19.5h10.5c.828 0 1.5-.672 1.5-1.5V6c0-.828-.672-1.5-1.5-1.5H6.75C5.922 4.5 5.25 5.172 5.25 6v12c0 .828.672 1.5 1.5 1.5z" />
+                    </svg>
                     System Logs (Live)
                 </h3>
                 <div class="log-container" id="logContainer">
@@ -212,7 +929,8 @@
         </div>
 
         <footer class="footer">
-            <p><strong>DEGENI</strong> v1.0.0 &mdash; Powered by <a href="https://bitzy.id" target="_blank" class="brand">BITZY.ID</a></p>
+            <p><strong>DEGENI</strong> v1.0.0 &mdash; Powered by <a href="https://bitzy.id" target="_blank"
+                    class="brand">BITZY.ID</a></p>
             <p style="margin-top:12px;font-size:0.75rem;color:#444;">Auto-refresh: 5s | API: localhost:8321</p>
         </footer>
     </div>
@@ -247,7 +965,7 @@
         // Load status
         let limitHit = false;
         let limitModel = '';
-        
+
         async function loadStatus() {
             const data = await api('/status');
             if (data) {
@@ -271,7 +989,7 @@
                     badge.style.background = 'var(--red)';
                 }
                 count.textContent = data.accounts.antigravity;
-                
+
                 // Check for limit
                 if (data.limit && data.limit.hit) {
                     limitHit = true;
@@ -279,7 +997,7 @@
                     limitAlert.classList.add('show');
                     limitMsg.textContent = data.limit.message || 'Switch model or add another account';
                     badge.style.background = 'var(--yellow)';
-                    
+
                     // Update model list to show limit indicator
                     updateModelLimitIndicator();
                 } else {
@@ -289,7 +1007,7 @@
                 }
             }
         }
-        
+
         // Update model cards to show limit indicator
         function updateModelLimitIndicator() {
             const models = document.querySelectorAll('.model');
@@ -314,7 +1032,7 @@
         async function loadAccounts() {
             const data = await api('/accounts');
             const container = document.getElementById('accountList');
-            
+
             if (data && data.accounts) {
                 container.innerHTML = data.accounts.map(acc => `
                     <div class="account" onclick="toggleAccount('${acc.filename}', ${acc.active})">
@@ -366,12 +1084,53 @@
         async function loadLogs() {
             const data = await api('/logs');
             const container = document.getElementById('logContainer');
-            
+
             if (data && data.logs) {
                 container.innerHTML = data.logs.slice(-20).reverse().map(log => {
                     const cls = log.type === 'ok' ? 'l-ok' : log.type === 'error' ? 'l-err' : log.type === 'warn' ? 'l-warn' : '';
                     return `<div class="log-entry ${cls}">${log.msg}</div>`;
                 }).join('');
+            }
+        }
+
+        // Load usage tracking
+        async function loadUsage() {
+            const data = await api('/usage');
+            const container = document.getElementById('usageList');
+            const countdown = document.getElementById('resetCountdown');
+            const resetTime = document.getElementById('resetTime');
+            const suggestionBox = document.getElementById('suggestionBox');
+            const suggestedAccount = document.getElementById('suggestedAccount');
+
+            if (data && data.accounts) {
+                // Update reset countdown
+                countdown.textContent = data.reset_countdown || '--';
+                resetTime.textContent = data.next_reset ? `(${data.next_reset})` : '';
+
+                // Render usage items
+                container.innerHTML = data.accounts.map(acc => {
+                    const barClass = acc.percent < 30 ? 'low' : acc.percent < 70 ? 'medium' : 'high';
+                    return `
+                        <div class="usage-item">
+                            <span class="usage-email">${acc.email}</span>
+                            <div class="usage-bar-container">
+                                <div class="usage-bar ${barClass}" style="width: ${acc.percent}%"></div>
+                            </div>
+                            <span class="usage-percent">${acc.percent}%</span>
+                            <span class="usage-status ${acc.status}">${acc.status}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                // Show smart suggestion
+                if (data.suggestion) {
+                    suggestionBox.style.display = 'flex';
+                    suggestedAccount.textContent = data.suggestion;
+                } else {
+                    suggestionBox.style.display = 'none';
+                }
+            } else {
+                container.innerHTML = '<div style="color:var(--subtext);text-align:center;padding:20px;">No usage data</div>';
             }
         }
 
@@ -382,7 +1141,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ filename })
             });
-            
+
             if (data?.success) {
                 showToast(`Account ${data.action}. Restart proxy to apply.`, 'success');
                 loadAccounts();
@@ -399,7 +1158,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ model })
             });
-            
+
             if (data?.success) {
                 showToast(`Switched to ${model}`, 'success');
                 loadModels();
@@ -413,7 +1172,7 @@
             btn.classList.add('loading');
             const data = await api('/restart', { method: 'POST' });
             btn.classList.remove('loading');
-            
+
             if (data?.success) {
                 showToast('Proxy restarted!', 'success');
                 setTimeout(loadStatus, 2000);
@@ -427,7 +1186,7 @@
             btn.classList.add('loading');
             const data = await api('/test', { method: 'POST' });
             btn.classList.remove('loading');
-            
+
             if (data?.success) {
                 showToast('Connection OK!', 'success');
             } else {
@@ -437,16 +1196,18 @@
 
         // Initialize
         async function init() {
-            await Promise.all([loadStatus(), loadAccounts(), loadModels(), loadLogs()]);
-            
+            await Promise.all([loadStatus(), loadAccounts(), loadModels(), loadLogs(), loadUsage()]);
+
             // Auto-refresh every 5 seconds
             refreshInterval = setInterval(() => {
                 loadStatus();
                 loadLogs();
+                loadUsage();
             }, 5000);
         }
 
         init();
     </script>
 </body>
+
 </html>
