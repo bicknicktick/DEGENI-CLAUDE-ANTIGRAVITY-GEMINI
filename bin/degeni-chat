@@ -1,9 +1,11 @@
 #!/bin/bash
 # DEGENI Chat Launcher
-cd /home/himy/DEGENI
+PROXY_DIR="$HOME/cliproxyapi"
+cd "$HOME/DEGENI"
+
 export ANTHROPIC_BASE_URL=http://127.0.0.1:8317
-export ANTHROPIC_AUTH_TOKEN=sk-dummy-token-for-proxy
-export ANTHROPIC_DEFAULT_SONNET_MODEL=gemini-claude-sonnet-4-5-thinking
+export ANTHROPIC_AUTH_TOKEN=$(grep -oP 'sk-[A-Za-z0-9]+' $PROXY_DIR/config.yaml 2>/dev/null | head -1 || echo "sk-default")
+export ANTHROPIC_DEFAULT_SONNET_MODEL=gemini-3-pro-preview
 
 echo -e "\033[0;36m"
 echo "  ██████╗ ███████╗ ██████╗ ███████╗███╗   ██╗██╗"
@@ -13,7 +15,7 @@ echo "  ██║  ██║██╔══╝  ██║   ██║██╔�
 echo "  ██████╔╝███████╗╚██████╔╝███████╗██║ ╚████║██║"
 echo "  ╚═════╝ ╚══════╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚═╝"
 echo -e "\033[0m"
-echo -e "\033[0;90m  Claude + Gemini AI Terminal | by BITZY.ID | v1.0.0\033[0m"
+echo -e "\033[0;90m  Claude + Gemini AI Terminal | by BITZY.ID | v1.1.0\033[0m"
 echo ""
 echo -e " \033[0;34m→\033[0m Starting DEGENI AI Chat..."
 echo ""
@@ -21,4 +23,4 @@ echo -e "  \033[0;90mType your message and press Enter\033[0m"
 echo -e "  \033[0;90mPress Ctrl+C to exit\033[0m"
 echo ""
 
-claude --model gemini-claude-sonnet-4-5-thinking
+claude --model gemini-3-pro-preview

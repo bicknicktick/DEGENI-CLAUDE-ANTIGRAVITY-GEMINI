@@ -314,99 +314,11 @@ def show_session(index_or_id):
     print(f" {C.RED}✗{C.NC} Session not found")
     return False
 
-def interactive_session():
-    """Interactive session selector - show list, pick, show history, continue chat"""
-    sessions = list_sessions()
-    
-    print(f"\n{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
-    print(f" {C.WHITE}CHAT SESSIONS{C.NC}")
-    print(f"{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
-    print()
-    
-    if not sessions:
-        print(f"  {C.GRAY}No sessions found{C.NC}")
-        print(f"\n  {C.WHITE}[n]{C.NC} Start new chat")
-        print(f"  {C.WHITE}[q]{C.NC} Back to menu")
-        print()
-        choice = input(f"  Select: ").strip().lower()
-        if choice == 'n':
-            create_session()
-            start_chat()
-        return
-    
-    for i, s in enumerate(sessions[:10], 1):
-        print(f"  {C.WHITE}[{i}]{C.NC} {C.CYAN}{s['name'][:40]}{C.NC}")
-        print(f"      {C.GRAY}{s['messages']} messages | {s['updated']}{C.NC}")
-        print()
-    
-    print(f"{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
-    print(f"  {C.WHITE}[1-{len(sessions[:10])}]{C.NC} Load & continue session")
-    print(f"  {C.WHITE}[n]{C.NC} Start new chat")
-    print(f"  {C.WHITE}[q]{C.NC} Back to menu")
-    print()
-    
-    choice = input(f"  Select: ").strip().lower()
-    
-    if choice == 'q' or choice == '':
-        return
-    
-    if choice == 'n':
-        name = input(f"  Session name (Enter for auto): ").strip()
-        create_session(name if name else None)
-        start_chat()
-        return
-    
-    try:
-        idx = int(choice) - 1
-        if 0 <= idx < len(sessions):
-            session = sessions[idx]
-            # Load the session
-            with open(CURRENT_SESSION_FILE, 'w') as f:
-                f.write(session['id'])
-            
-            # Show history
-            print(f"\n{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
-            print(f" {C.WHITE}Loaded: {session['name']}{C.NC}")
-            print(f"{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
-            
-            with open(session['file'], 'r') as f:
-                data = json.load(f)
-            
-            # Show last few messages
-            messages = data.get('messages', [])[-6:]  # Last 6 messages
-            if messages:
-                print(f"\n  {C.GRAY}--- Recent History ---{C.NC}\n")
-                for msg in messages:
-                    role = msg['role']
-                    content = msg['content'][:150] + ('...' if len(msg['content']) > 150 else '')
-                    if role == 'user':
-                        print(f"  {C.GREEN}You:{C.NC} {content}")
-                    else:
-                        print(f"  {C.CYAN}AI:{C.NC} {content}")
-                    print()
-            
-            print(f"{C.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.NC}")
-            print(f"  {C.GREEN}Session loaded! Continue chatting...{C.NC}")
-            print()
-            
-            # Start chat
-            start_chat()
-        else:
-            print(f" {C.RED}✗{C.NC} Invalid selection")
-    except ValueError:
-        print(f" {C.RED}✗{C.NC} Invalid input")
-
-def start_chat():
-    """Start the AI chat using the ai wrapper"""
-    import subprocess
-    ai_wrapper = DEGENI_HOME / "bin" / "ai"
-    subprocess.run(['bash', str(ai_wrapper)])
-
 def main():
     ensure_dirs()
     
     if len(sys.argv) < 2:
-        interactive_session()
+        print_sessions()
         return
     
     cmd = sys.argv[1].lower()

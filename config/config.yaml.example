@@ -1,0 +1,96 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  DEGENI Proxy Configuration Template
+#  Copy this to config.yaml and fill in your own values
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Server host/interface to bind to. Default is empty ("") to bind all interfaces (IPv4 + IPv6).
+# Use "127.0.0.1" or "localhost" to restrict access to local machine only.
+host: ""
+# Server port
+port: 8317
+
+# TLS settings for HTTPS. When enabled, the server listens with the provided certificate and key.
+tls:
+  enable: false
+  cert: ""
+  key: ""
+
+# Management API settings
+remote-management:
+  # Whether to allow remote (non-localhost) management access.
+  allow-remote: false
+  # Management key. Leave empty to disable Management API.
+  secret-key: ""
+  # Disable the bundled management control panel when true.
+  disable-control-panel: false
+
+# Authentication directory (supports ~ for home directory)
+auth-dir: "~/.cli-proxy-api"
+
+# API keys for authentication
+# Generate your own keys or use a random string
+api-keys:
+  - "sk-YOUR-API-KEY-HERE"
+
+# Enable debug logging
+debug: false
+
+# When true, write application logs to rotating files instead of stdout
+logging-to-file: false
+
+# When false, disable in-memory usage statistics aggregation
+usage-statistics-enabled: true
+
+# Proxy URL. Supports socks5/http/https protocols. Example: socks5://user:pass@192.168.1.1:1080/
+proxy-url: ""
+
+# Number of times to retry a request. Retries will occur if the HTTP response code is 403, 408, 500, 502, 503, or 504.
+request-retry: 3
+
+# Maximum wait time in seconds for a cooled-down credential before triggering a retry.
+max-retry-interval: 30
+
+# Quota exceeded behavior
+quota-exceeded:
+  switch-project: true
+  switch-preview-model: true
+
+# When true, enable authentication for the WebSocket API (/v1/ws).
+ws-auth: false
+request-log: false
+disable-cooling: false
+
+ampcode:
+  upstream-url: ""
+  upstream-api-key: ""
+  restrict-management-to-localhost: true
+  model-mappings: []
+  force-model-mappings: false
+
+payload:
+  default: []
+  override: 
+    - models:
+        - name: "gemini-*"
+          protocol: "gemini"
+      params:
+        "tools.#.function_declarations.#.parameters.properties.#.propertyNames": null
+        "tools.#.function_declarations.#.parameters.propertyNames": null
+
+# OAuth model alias mappings
+oauth-model-alias:
+  antigravity:
+    - name: rev19-uic3-1p
+      alias: gemini-2.5-computer-use-preview-10-2025
+    - name: gemini-3-pro-image
+      alias: gemini-3-pro-image-preview
+    - name: gemini-3-pro-high
+      alias: gemini-3-pro-preview
+    - name: gemini-3-flash
+      alias: gemini-3-flash-preview
+    - name: claude-sonnet-4-5
+      alias: gemini-claude-sonnet-4-5
+    - name: claude-sonnet-4-5-thinking
+      alias: gemini-claude-sonnet-4-5-thinking
+    - name: claude-opus-4-5-thinking
+      alias: gemini-claude-opus-4-5-thinking

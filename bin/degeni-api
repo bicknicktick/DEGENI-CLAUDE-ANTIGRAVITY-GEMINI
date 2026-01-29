@@ -19,10 +19,6 @@ PROXY_DIR = os.path.join(HOME, "cliproxyapi")
 PROXY_LOG = os.path.join(PROXY_DIR, "cliproxyapi.log")
 CONFIG_FILE = os.path.join(PROXY_DIR, "config.yaml")
 
-# Global OAuth state
-oauth_process = None
-oauth_provider = None
-
 class DEGENIHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass  # Suppress logs
@@ -38,6 +34,19 @@ class DEGENIHandler(BaseHTTPRequestHandler):
         self.send_cors_headers()
         self.end_headers()
         self.wfile.write(json.dumps(data).encode())
+    
+    def _get_api_key(self):
+        """Extract API key from config file using regex"""
+        import re
+        try:
+            with open(CONFIG_FILE, 'r') as f:
+                content = f.read()
+                match = re.search(r'sk-[A-Za-z0-9]+', content)
+                if match:
+                    return match.group(0)
+        except:
+            pass
+        return "sk-default"
     
     def do_OPTIONS(self):
         self.send_response(200)
@@ -75,18 +84,6 @@ class DEGENIHandler(BaseHTTPRequestHandler):
             content_length = int(self.headers.get('Content-Length', 0))
             body = json.loads(self.rfile.read(content_length)) if content_length else {}
             self.switch_model(body.get('model'))
-        elif path == '/api/oauth/start':
-            content_length = int(self.headers.get('Content-Length', 0))
-            body = json.loads(self.rfile.read(content_length)) if content_length else {}
-            self.start_oauth(body.get('provider', 'antigravity'))
-        elif path == '/api/oauth/complete':
-            content_length = int(self.headers.get('Content-Length', 0))
-            body = json.loads(self.rfile.read(content_length)) if content_length else {}
-            self.complete_oauth(body.get('callback_url', ''))
-        elif path == '/api/account/delete':
-            content_length = int(self.headers.get('Content-Length', 0))
-            body = json.loads(self.rfile.read(content_length)) if content_length else {}
-            self.delete_account(body.get('filename'))
         else:
             self.send_json({'error': 'Not found'}, 404)
     
@@ -212,16 +209,8 @@ class DEGENIHandler(BaseHTTPRequestHandler):
     def get_models(self):
         """Get available models from proxy API"""
         try:
-            # Read API key from config
-            api_key = ''
-            with open(CONFIG_FILE, 'r') as f:
-                for line in f:
-                    if 'sk-' in line and 'api-keys' not in line:
-                        api_key = line.strip().strip('- "\'')
-                        break
-            
-            if not api_key:
-                api_key = 'sk-dummy-token-for-proxy'
+            # Read API key from config using regex
+            api_key = self._get_api_key()
             
             result = subprocess.run([
                 'curl', '-s', 'http://localhost:8317/v1/models',
@@ -291,13 +280,13 @@ class DEGENIHandler(BaseHTTPRequestHandler):
     def test_connection(self):
         """Test API connection"""
         try:
-            api_key = 'sk-dummy-token-for-proxy'
+            api_key = self._get_api_key()
             result = subprocess.run([
                 'curl', '-s', '-X', 'POST', 'http://localhost:8317/v1/messages',
                 '-H', f'Authorization: Bearer {api_key}',
                 '-H', 'Content-Type: application/json',
                 '-H', 'anthropic-version: 2023-06-01',
-                '-d', '{"model":"gemini-claude-sonnet-4-5-thinking","max_tokens":5,"messages":[{"role":"user","content":"hi"}]}'
+                '-d', '{"model":"gemini-3-pro-preview","max_tokens":5,"messages":[{"role":"user","content":"hi"}]}'
             ], capture_output=True, text=True, timeout=30)
             
             if 'content' in result.stdout:
@@ -362,180 +351,6 @@ class DEGENIHandler(BaseHTTPRequestHandler):
                 self.send_json({'error': 'AI script not found'}, 404)
         except Exception as e:
             self.send_json({'error': str(e)}, 500)
-
-
-    def start_oauth(self, provider):
-        """Start OAuth flow - returns URL, saves state to file"""
-        try:
-            global oauth_process, oauth_provider
-            
-            # Kill any existing oauth process
-            if oauth_process:
-                try:
-                    oauth_process.kill()
-                except:
-                    pass
-                oauth_process = None
-            
-            if provider == 'antigravity':
-                cmd = ['./cli-proxy-api', '-antigravity-login', '-no-browser']
-            else:
-                cmd = ['./cli-proxy-api', '-login', '-no-browser']
-            
-            oauth_provider = provider
-            
-            # Run command and capture output to get OAuth URL
-            process = subprocess.Popen(
-                cmd,
-                cwd=PROXY_DIR,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1  # Line buffered
-            )
-            
-            # Read output to find URL with timeout
-            oauth_url = None
-            output_lines = []
-            
-            import time
-            import re
-            
-            # Set a deadline
-            deadline = time.time() + 15
-            
-            while time.time() < deadline:
-                if process.poll() is not None:
-                    # Process exited
-                    break
-                    
-                try:
-                    line = process.stdout.readline()
-                    if line:
-                        output_lines.append(line.strip())
-                        # Look for Google OAuth URL specifically
-                        # Must contain accounts.google.com or aistudio.google.com
-                        urls = re.findall(r'https://(?:accounts\.google\.com|aistudio\.google\.com)[^\s\'"<>\)]*', line)
-                        if urls:
-                            oauth_url = urls[0].rstrip(')')
-                            break
-                except:
-                    time.sleep(0.1)
-            
-            if oauth_url:
-                # Store process globally
-                oauth_process = process
-                
-                # Also save to state file for reliability
-                state_file = os.path.join(HOME, '.degeni_oauth_state')
-                with open(state_file, 'w') as f:
-                    json.dump({
-                        'pid': process.pid,
-                        'provider': provider,
-                        'url': oauth_url,
-                        'started': time.time()
-                    }, f)
-                
-                self.send_json({
-                    'success': True, 
-                    'url': oauth_url, 
-                    'provider': provider,
-                    'pid': process.pid
-                })
-            else:
-                process.kill()
-                self.send_json({
-                    'success': False, 
-                    'error': 'Could not get OAuth URL',
-                    'output': '\n'.join(output_lines[-10:]),
-                    'hint': 'Try running in terminal: degeni add'
-                }, 500)
-                
-        except Exception as e:
-            self.send_json({'success': False, 'error': str(e)}, 500)
-    
-    def complete_oauth(self, callback_url):
-        """Complete OAuth with callback URL"""
-        try:
-            global oauth_process
-            import time
-            
-            if not callback_url:
-                self.send_json({'error': 'Callback URL required'}, 400)
-                return
-            
-            # Count existing accounts before
-            existing_accounts = len(glob.glob(os.path.join(AUTH_DIR, '*.json')))
-            
-            # Try global process first
-            process_alive = oauth_process and oauth_process.poll() is None
-            
-            if process_alive:
-                try:
-                    # Send callback URL to stdin
-                    oauth_process.stdin.write(callback_url + '\n')
-                    oauth_process.stdin.flush()
-                    
-                    # Wait for process to complete
-                    try:
-                        oauth_process.wait(timeout=30)
-                    except subprocess.TimeoutExpired:
-                        oauth_process.kill()
-                    
-                    oauth_process = None
-                    
-                    # Check for new account
-                    time.sleep(1)
-                    new_accounts = len(glob.glob(os.path.join(AUTH_DIR, '*.json')))
-                    
-                    if new_accounts > existing_accounts:
-                        self.send_json({'success': True, 'message': 'Account added successfully!'})
-                    else:
-                        self.send_json({
-                            'success': True, 
-                            'message': 'OAuth completed. Refresh to check accounts.',
-                            'note': 'If not showing, restart proxy: degeni restart'
-                        })
-                    return
-                    
-                except Exception as e:
-                    oauth_process = None
-                    # Fall through to alternative method
-            
-            # Alternative: Run fresh process with stdin
-            # This handles expired session by running a new login
-            self.send_json({
-                'success': False, 
-                'error': 'OAuth session expired',
-                'hint': 'Click "Open Google Login" to start again, or run: degeni add'
-            }, 400)
-            
-        except Exception as e:
-            self.send_json({'success': False, 'error': str(e)}, 500)
-    
-    def delete_account(self, filename):
-        """Delete an account"""
-        if not filename:
-            self.send_json({'error': 'Filename required'}, 400)
-            return
-        
-        try:
-            filepath = os.path.join(AUTH_DIR, filename)
-            if os.path.exists(filepath):
-                os.remove(filepath)
-                self.send_json({'success': True, 'message': f'Deleted {filename}'})
-            elif os.path.exists(filepath + '.disabled'):
-                os.remove(filepath + '.disabled')
-                self.send_json({'success': True, 'message': f'Deleted {filename}'})
-            else:
-                self.send_json({'error': 'Account not found'}, 404)
-        except Exception as e:
-            self.send_json({'error': str(e)}, 500)
-
-
-# Global variable for OAuth process
-oauth_process = None
 
 
 def run_server():

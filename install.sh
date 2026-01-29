@@ -23,12 +23,6 @@ DEGENI_HOME="$HOME/DEGENI"
 AUTH_DIR="$HOME/.cli-proxy-api"
 PROXY_DIR="$HOME/cliproxyapi"
 
-# Detect Termux environment
-IS_TERMUX=false
-if [[ "$PREFIX" == *"com.termux"* ]] || [[ -d "/data/data/com.termux" ]]; then
-    IS_TERMUX=true
-fi
-
 # Colors
 R='\033[0;31m'
 G='\033[0;32m'
@@ -136,13 +130,7 @@ if command -v claude &> /dev/null; then
     success "Claude CLI: installed"
 else
     info "Installing Claude CLI..."
-    if [ "$IS_TERMUX" = true ]; then
-        # Termux-specific installation
-        npm config set unsafe-perm true
-        npm install -g @anthropic-ai/claude-code --unsafe-perm
-    else
-        npm install -g @anthropic-ai/claude-code
-    fi
+    npm install -g @anthropic-ai/claude-code
     success "Claude CLI installed"
 fi
 
@@ -209,36 +197,17 @@ SHELL_RC="$HOME/.bashrc"
 # Add DEGENI to PATH if not already
 if ! grep -q "DEGENI" "$SHELL_RC" 2>/dev/null; then
     info "Adding DEGENI to shell..."
-    
-    # Get API key from proxy config
-    API_KEY=$(grep -A1 "api-keys:" "$PROXY_DIR/config.yaml" 2>/dev/null | tail -1 | sed 's/.*"\(sk-[^"]*\)".*/\1/' || echo "")
-    
-    cat >> "$SHELL_RC" << SHELL_CONFIG
+    cat >> "$SHELL_RC" << 'SHELL_CONFIG'
 
 #═══════════════════════════════════════════════════════════════════════════════
 # DEGENI - Claude + Gemini AI Terminal | by BITZY.ID
 #═══════════════════════════════════════════════════════════════════════════════
-export PATH="\$HOME/DEGENI/bin:\$PATH"
-alias degeni="\$HOME/DEGENI/bin/degeni"
-export ANTHROPIC_AUTH_TOKEN="$API_KEY"
-export ANTHROPIC_BASE_URL="http://127.0.0.1:8317"
+export PATH="$HOME/DEGENI/bin:$PATH"
+alias degeni="$HOME/DEGENI/bin/degeni"
 SHELL_CONFIG
     success "Shell configured"
 else
     success "Shell already configured"
-fi
-
-# Configure Claude CLI settings
-if [ -n "$API_KEY" ] || API_KEY=$(grep -A1 "api-keys:" "$PROXY_DIR/config.yaml" 2>/dev/null | tail -1 | sed 's/.*"\(sk-[^"]*\)".*/\1/'); then
-    mkdir -p ~/.claude
-    cat > ~/.claude/settings.json << EOF
-{
-  "apiKey": "$API_KEY",
-  "apiBaseUrl": "http://127.0.0.1:8317",
-  "model": "gemini-claude-sonnet-4-5-thinking"
-}
-EOF
-    success "Claude CLI configured"
 fi
 
 # Export PATH for current session
@@ -270,13 +239,6 @@ echo ""
 
 # Check if accounts exist
 ACCOUNT_COUNT=$(ls -1 "$AUTH_DIR"/antigravity-*.json 2>/dev/null | wc -l)
-
-# Apply Termux fix if needed
-if [ "$IS_TERMUX" = true ]; then
-    echo ""
-    echo -e "${Y}🔧 Applying Termux-specific fixes...${NC}"
-    bash "$DEGENI_HOME/fix-termux.sh"
-fi
 
 if [ "$ACCOUNT_COUNT" -gt 0 ]; then
     echo -e "  ${G}✓ Found $ACCOUNT_COUNT existing account(s)${NC}"

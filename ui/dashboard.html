@@ -109,31 +109,6 @@
         .limit-text span { color: var(--subtext); font-size: 0.8rem; }
         .model.limit { border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.05); }
         .model.limit .limit-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--red); color: #fff; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-left: 8px; animation: pulse-warn 1s infinite; }
-        /* Modal Styles */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-overlay.show { display: flex; }
-        .modal { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 90%; max-width: 500px; animation: modalIn 0.3s var(--ease); }
-        @keyframes modalIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .modal h2 { font-size: 1.25rem; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
-        .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--subtext); cursor: pointer; font-size: 1.5rem; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; color: var(--subtext); font-size: 0.875rem; }
-        .form-group select, .form-group input { width: 100%; padding: 12px 16px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 0.95rem; }
-        .form-group select:focus, .form-group input:focus { outline: none; border-color: var(--cyan); }
-        .form-group input::placeholder { color: #555; }
-        .modal-steps { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 16px; margin: 20px 0; }
-        .modal-steps ol { margin: 0; padding-left: 20px; color: var(--subtext); font-size: 0.875rem; line-height: 1.8; }
-        .modal-steps code { background: rgba(6, 182, 212, 0.1); color: var(--cyan); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
-        .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
-        .modal-actions .btn { flex: 1; }
-        .btn-primary { background: linear-gradient(135deg, var(--cyan), var(--green)); color: #000; font-weight: 600; }
-        .btn-secondary { background: rgba(255,255,255,0.05); }
-        .oauth-status { text-align: center; padding: 20px; }
-        .oauth-status .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--cyan); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
-        .account-actions { display: flex; gap: 8px; }
-        .btn-sm { padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; }
-        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.2); }
-        .btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
     </style>
 </head>
 <body>
@@ -195,7 +170,7 @@
                         <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" /></svg>
                         Test Connection
                     </button>
-                    <button class="btn" onclick="openAddAccountModal()">
+                    <button class="btn" onclick="showToast('Run: degeni add', 'success')">
                         <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                         Add Account
                     </button>
@@ -244,54 +219,6 @@
 
     <div class="toast" id="toast"><span id="toastMsg">Message</span></div>
 
-    <!-- Add Account Modal -->
-    <div class="modal-overlay" id="addAccountModal" onclick="closeModal(event)">
-        <div class="modal" onclick="event.stopPropagation()">
-            <h2>➕ Add Google AI Account</h2>
-            
-            <div id="oauthStep1">
-                <div style="text-align:center;margin-bottom:20px;">
-                    <div style="font-size:3rem;margin-bottom:10px;">🔐</div>
-                    <p style="color:var(--text);font-size:1rem;">Add a new Google AI account</p>
-                </div>
-                
-                <div class="modal-steps" style="background:var(--card);padding:16px;border-radius:8px;margin-bottom:20px;">
-                    <p style="color:var(--cyan);font-weight:600;margin-bottom:12px;">📋 Run this command in terminal:</p>
-                    <code style="display:block;background:#000;padding:12px;border-radius:6px;font-size:1rem;color:var(--green);user-select:all;cursor:pointer;" onclick="copyCommand(this)" title="Click to copy">degeni add</code>
-                    <p style="color:var(--subtext);font-size:0.8rem;margin-top:8px;">Click the command to copy</p>
-                </div>
-                
-                <div class="modal-steps" style="background:var(--card);padding:16px;border-radius:8px;">
-                    <p style="color:var(--subtext);font-weight:500;margin-bottom:8px;">Steps:</p>
-                    <ol style="color:var(--subtext);font-size:0.9rem;padding-left:20px;margin:0;">
-                        <li>Run <code>degeni add</code> in terminal</li>
-                        <li>Choose provider (Antigravity recommended)</li>
-                        <li>Open the OAuth URL in browser</li>
-                        <li>Login with Google account</li>
-                        <li>Come back here and click <strong>Refresh</strong></li>
-                    </ol>
-                </div>
-                
-                <div class="modal-actions" style="margin-top:20px;">
-                    <button class="btn btn-secondary" onclick="closeAddAccountModal()">Cancel</button>
-                    <button class="btn btn-primary" onclick="refreshAfterAdd()">🔄 Refresh Accounts</button>
-                </div>
-            </div>
-            
-            <div id="oauthStep3" style="display:none;">
-                <div class="oauth-status">
-                    <div style="font-size:3rem;margin-bottom:16px;">✅</div>
-                    <p style="color:var(--green);font-size:1.1rem;font-weight:600;">New Account Detected!</p>
-                    <p style="color:var(--subtext);margin-top:8px;">Restart proxy to activate.</p>
-                </div>
-                <div class="modal-actions">
-                    <button class="btn btn-secondary" onclick="closeAddAccountModal()">Close</button>
-                    <button class="btn btn-primary" onclick="restartAndClose()">🔄 Restart Proxy</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
         const API_BASE = 'http://localhost:8321/api';
         let currentModel = '';
@@ -320,74 +247,46 @@
         // Load status
         let limitHit = false;
         let limitModel = '';
-        let apiConnected = false;
         
         async function loadStatus() {
             const data = await api('/status');
-            const dot = document.getElementById('statusDot');
-            const text = document.getElementById('statusText');
-            const pid = document.getElementById('pidText');
-            const count = document.getElementById('accountCount');
-            const badge = document.getElementById('liveBadge');
-            const limitAlert = document.getElementById('limitAlert');
-            const limitMsg = document.getElementById('limitMsg');
-            
-            if (!data) {
-                // API not available
-                apiConnected = false;
-                dot.classList.add('offline');
-                text.textContent = 'API Offline';
-                pid.textContent = '';
-                count.textContent = '-';
-                badge.style.background = 'var(--red)';
-                badge.innerHTML = '<span style="width:6px;height:6px;background:#fff;border-radius:50%;"></span> OFFLINE';
-                
-                // Show help message
-                if (!document.getElementById('apiOfflineMsg')) {
-                    limitAlert.innerHTML = `
-                        <div class="limit-icon">⚠️</div>
-                        <div class="limit-text">
-                            <strong>API Server Not Running</strong>
-                            <span>Run: ~/DEGENI/start-dashboard.sh</span>
-                        </div>
-                    `;
-                    limitAlert.classList.add('show');
-                    limitAlert.id = 'apiOfflineMsg';
+            if (data) {
+                const dot = document.getElementById('statusDot');
+                const text = document.getElementById('statusText');
+                const pid = document.getElementById('pidText');
+                const count = document.getElementById('accountCount');
+                const badge = document.getElementById('liveBadge');
+                const limitAlert = document.getElementById('limitAlert');
+                const limitMsg = document.getElementById('limitMsg');
+
+                if (data.online) {
+                    dot.classList.remove('offline');
+                    text.textContent = 'Online';
+                    pid.textContent = `(PID: ${data.pid})`;
+                    badge.style.background = 'var(--green)';
+                } else {
+                    dot.classList.add('offline');
+                    text.textContent = 'Offline';
+                    pid.textContent = '';
+                    badge.style.background = 'var(--red)';
                 }
-                return;
-            }
-            
-            apiConnected = true;
-            limitAlert.id = 'limitAlert';
-            badge.innerHTML = '<span style="width:6px;height:6px;background:#000;border-radius:50%;"></span> LIVE';
-            
-            if (data.online) {
-                dot.classList.remove('offline');
-                text.textContent = 'Online';
-                pid.textContent = `(PID: ${data.pid})`;
-                badge.style.background = 'var(--green)';
-            } else {
-                dot.classList.add('offline');
-                text.textContent = 'Offline';
-                pid.textContent = '';
-                badge.style.background = 'var(--red)';
-            }
-            count.textContent = data.accounts.antigravity;
-            
-            // Check for limit
-            if (data.limit && data.limit.hit) {
-                limitHit = true;
-                limitModel = data.limit.model || '';
-                limitAlert.classList.add('show');
-                limitMsg.textContent = data.limit.message || 'Switch model or add another account';
-                badge.style.background = 'var(--yellow)';
+                count.textContent = data.accounts.antigravity;
                 
-                // Update model list to show limit indicator
-                updateModelLimitIndicator();
-            } else {
-                limitHit = false;
-                limitModel = '';
-                limitAlert.classList.remove('show');
+                // Check for limit
+                if (data.limit && data.limit.hit) {
+                    limitHit = true;
+                    limitModel = data.limit.model || '';
+                    limitAlert.classList.add('show');
+                    limitMsg.textContent = data.limit.message || 'Switch model or add another account';
+                    badge.style.background = 'var(--yellow)';
+                    
+                    // Update model list to show limit indicator
+                    updateModelLimitIndicator();
+                } else {
+                    limitHit = false;
+                    limitModel = '';
+                    limitAlert.classList.remove('show');
+                }
             }
         }
         
@@ -416,24 +315,21 @@
             const data = await api('/accounts');
             const container = document.getElementById('accountList');
             
-            if (data && data.accounts && data.accounts.length > 0) {
+            if (data && data.accounts) {
                 container.innerHTML = data.accounts.map(acc => `
-                    <div class="account">
-                        <div class="account-info" onclick="toggleAccount('${acc.filename}', ${acc.active})" style="cursor:pointer;flex:1;">
+                    <div class="account" onclick="toggleAccount('${acc.filename}', ${acc.active})">
+                        <div class="account-info">
                             <div class="avatar ${acc.type}">${acc.email[0].toUpperCase()}</div>
                             <div>
                                 <h4>${acc.email}</h4>
                                 <span>${acc.project || acc.type}</span>
                             </div>
                         </div>
-                        <div class="account-actions">
-                            <span class="badge ${acc.active ? 'badge-active' : 'badge-disabled'}" onclick="toggleAccount('${acc.filename}', ${acc.active})" style="cursor:pointer;">${acc.active ? 'Active' : 'Disabled'}</span>
-                            <button class="btn btn-sm btn-danger" onclick="deleteAccount('${acc.filename}', event)" title="Delete">🗑️</button>
-                        </div>
+                        <span class="badge ${acc.active ? 'badge-active' : 'badge-disabled'}">${acc.active ? 'Active' : 'Disabled'}</span>
                     </div>
                 `).join('');
             } else {
-                container.innerHTML = '<div style="color:var(--subtext);text-align:center;padding:20px;">No accounts found<br><small>Click "Add Account" to add one</small></div>';
+                container.innerHTML = '<div style="color:var(--subtext);text-align:center;padding:20px;">No accounts found</div>';
             }
         }
 
@@ -536,85 +432,6 @@
                 showToast('Connection OK!', 'success');
             } else {
                 showToast(data?.message || 'Connection failed', 'error');
-            }
-        }
-
-        // ============ Add Account Modal Functions ============
-        
-        async function openAddAccountModal() {
-            // Store current account count to detect new additions
-            const data = await api('/accounts');
-            initialAccountCount = data?.accounts?.length || 0;
-            
-            // Reset modal state
-            document.getElementById('oauthStep1').style.display = 'block';
-            document.getElementById('oauthStep3').style.display = 'none';
-            
-            document.getElementById('addAccountModal').classList.add('show');
-        }
-        
-        function closeAddAccountModal() {
-            document.getElementById('addAccountModal').classList.remove('show');
-        }
-        
-        function closeModal(event) {
-            if (event.target.classList.contains('modal-overlay')) {
-                closeAddAccountModal();
-            }
-        }
-        
-        let initialAccountCount = 0;
-        
-        function copyCommand(el) {
-            navigator.clipboard.writeText(el.textContent);
-            showToast('Command copied!', 'success');
-        }
-        
-        async function refreshAfterAdd() {
-            // Check if new accounts were added
-            const data = await api('/accounts');
-            if (data?.accounts) {
-                const newCount = data.accounts.length;
-                if (newCount > initialAccountCount) {
-                    // New account detected!
-                    document.getElementById('oauthStep1').style.display = 'none';
-                    document.getElementById('oauthStep3').style.display = 'block';
-                    loadAccounts();
-                    loadStatus();
-                } else {
-                    showToast('No new accounts found. Complete OAuth in terminal first.', 'error');
-                }
-            } else {
-                showToast('Failed to check accounts', 'error');
-            }
-        }
-        
-        async function restartAndClose() {
-            const data = await api('/restart', { method: 'POST' });
-            if (data?.success) {
-                showToast('Proxy restarted!', 'success');
-                setTimeout(loadStatus, 2000);
-            }
-            closeAddAccountModal();
-        }
-        
-        // Delete account
-        async function deleteAccount(filename, event) {
-            event.stopPropagation();
-            if (!confirm('Delete this account?')) return;
-            
-            const data = await api('/account/delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename })
-            });
-            
-            if (data?.success) {
-                showToast('Account deleted', 'success');
-                loadAccounts();
-                loadStatus();
-            } else {
-                showToast(data?.error || 'Failed to delete', 'error');
             }
         }
 

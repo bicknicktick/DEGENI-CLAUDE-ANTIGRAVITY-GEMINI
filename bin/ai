@@ -7,7 +7,6 @@
 DEGENI_HOME="$HOME/DEGENI"
 PROXY_DIR="$HOME/cliproxyapi"
 SESSION_MGR="$DEGENI_HOME/bin/degeni-session"
-CONFIG_FILE="$DEGENI_HOME/config/model.conf"
 
 # Colors
 C='\033[0;36m'
@@ -17,20 +16,11 @@ W='\033[1;37m'
 D='\033[0;90m'
 NC='\033[0m'
 
-# Get current model from config
-get_model() {
-    if [ -f "$CONFIG_FILE" ]; then
-        grep "^MODEL=" "$CONFIG_FILE" | cut -d'=' -f2
-    else
-        echo "gemini-claude-sonnet-4-5-thinking"
-    fi
-}
-
 # Export environment
 export ANTHROPIC_BASE_URL=http://127.0.0.1:8317
-export ANTHROPIC_AUTH_TOKEN=$(grep -A1 "api-keys:" $PROXY_DIR/config.yaml | tail -1 | sed 's/.*"\(sk-[^"]*\)".*/\1/' || echo "sk-default")
-export ANTHROPIC_DEFAULT_SONNET_MODEL=gemini-claude-opus-4-5-thinking
-export ANTHROPIC_DEFAULT_OPUS_MODEL=gemini-claude-opus-4-5-thinking
+export ANTHROPIC_AUTH_TOKEN=$(grep -oP 'sk-[A-Za-z0-9]+' $PROXY_DIR/config.yaml 2>/dev/null | head -1 || echo "sk-default")
+export ANTHROPIC_DEFAULT_SONNET_MODEL=gemini-3-pro-preview
+export ANTHROPIC_DEFAULT_OPUS_MODEL=gemini-3-pro-preview
 
 # Handle special commands
 case "$1" in
@@ -168,8 +158,8 @@ if [ $# -eq 0 ]; then
         echo ""
         echo -e "${C}AI → ${NC}"
         
-        # Get AI response with model flag
-        response=$(claude --model "$(get_model)" -p "$user_input" 2>&1)
+        # Get AI response
+        response=$(claude --dangerously-skip-permissions -p "$user_input" 2>&1)
         echo "$response"
         echo ""
         
@@ -183,8 +173,8 @@ else
     # Save to session
     save_to_session "user" "$query"
     
-    # Get response with model flag
-    response=$(claude --model "$(get_model)" -p "$query" 2>&1)
+    # Get response
+    response=$(claude --dangerously-skip-permissions -p "$query" 2>&1)
     echo "$response"
     
     # Save response

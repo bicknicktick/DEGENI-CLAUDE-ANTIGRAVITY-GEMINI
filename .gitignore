@@ -13,8 +13,9 @@ sessions/*.json
 !sessions/.gitkeep
 
 # Config files with credentials
-config/*.conf
-!config/config.yaml
+config/config.yaml
+config/model.conf
+!config/config.yaml.example
 
 # Temporary files
 *.tmp
