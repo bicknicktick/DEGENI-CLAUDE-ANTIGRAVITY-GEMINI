@@ -3,7 +3,7 @@
 #  DEGENI - Claude + Gemini AI Manager | by BITZY.ID
 #═══════════════════════════════════════════════════════════════════════════════
 
-VERSION="1.0.0"
+VERSION="1.1.0"
 DEGENI_HOME="$HOME/DEGENI"
 AUTH_DIR="$HOME/.cli-proxy-api"
 PROXY_DIR="$HOME/cliproxyapi"
@@ -410,13 +410,22 @@ quick_ask() {
     claude --dangerously-skip-permissions -p "$@"
 }
 
+droid_mode() {
+    info "Starting Droid CLI (Factory AI)..."
+    echo ""
+    export ANTHROPIC_BASE_URL=http://127.0.0.1:8317
+    export ANTHROPIC_AUTH_TOKEN=$(grep -oP 'sk-[A-Za-z0-9]+' $PROXY_DIR/config.yaml 2>/dev/null | head -1 || echo "sk-default")
+    droid
+}
+
 show_help() {
     draw_line
     echo -e " ${W}DEGENI COMMANDS${NC}"
     draw_line
     echo ""
     echo -e "  ${W}degeni \"...\"${NC}        Quick question to AI"
-    echo -e "  ${W}degeni chat${NC}         Interactive chat mode"
+    echo -e "  ${W}degeni chat${NC}         Interactive chat mode (Claude CLI)"
+    echo -e "  ${W}degeni droid${NC}        Interactive chat mode (Droid CLI)"
     echo -e "  ${W}degeni${NC}              Interactive menu"
     echo ""
     echo -e "  ${W}degeni status${NC}       System status"
@@ -440,11 +449,11 @@ show_menu() {
     echo ""
     echo -e "  ${W}QUICK ACTIONS${NC}"
     echo ""
-    echo -e "  ${C}[1]${NC} 💬 Chat Mode        ${C}[6]${NC} 🔄 Restart Proxy"
-    echo -e "  ${C}[2]${NC} 📊 Status           ${C}[7]${NC} 🧪 Test Accounts"
-    echo -e "  ${C}[3]${NC} 📋 List Accounts    ${C}[8]${NC} 🔀 Switch Model"
-    echo -e "  ${C}[4]${NC} ➕ Add Account      ${C}[9]${NC} 🌐 Dashboard"
-    echo -e "  ${C}[5]${NC} ⚙️  Manage Accounts  ${C}[0]${NC} 🚪 Exit"
+    echo -e "  ${C}[1]${NC} 💬 Chat (Claude)    ${C}[6]${NC} 🔄 Restart Proxy"
+    echo -e "  ${C}[2]${NC} 🤖 Droid (Factory)  ${C}[7]${NC} 🧪 Test Accounts"
+    echo -e "  ${C}[3]${NC} 📊 Status           ${C}[8]${NC} 🔀 Switch Model"
+    echo -e "  ${C}[4]${NC} 📋 List Accounts    ${C}[9]${NC} 🌐 Dashboard"
+    echo -e "  ${C}[5]${NC} ➕ Add Account      ${C}[0]${NC} 🚪 Exit"
     echo ""
     echo -e "  ${C}[e]${NC} ⚠️  View Errors     ${C}[h]${NC} ❓ Help"
     echo ""
@@ -453,6 +462,7 @@ show_menu() {
 # Main
 case "$1" in
     chat|c) clear; print_logo; chat_mode ;;
+    droid|dr) clear; print_logo; droid_mode ;;
     ask|a) shift; quick_ask "$@" ;;
     status|s) clear; print_logo; show_status ;;
     list|l) clear; print_logo; list_accounts ;;
@@ -477,11 +487,10 @@ case "$1" in
             read -p "  Select [0-9/e/h]: " choice
             case $choice in
                 1) chat_mode ;;
-                2) show_status; read -p "  Press Enter..." ;;
-                3) list_accounts; read -p "  Press Enter..." ;;
-                4) add_account; read -p "  Press Enter..." ;;
-                5) echo -e "\n  ${C}[d]${NC} Disable  ${C}[e]${NC} Enable"; read -p "  Choice: " c
-                   [ "$c" == "d" ] && disable_account || enable_account; read -p "  Press Enter..." ;;
+                2) droid_mode ;;
+                3) show_status; read -p "  Press Enter..." ;;
+                4) list_accounts; read -p "  Press Enter..." ;;
+                5) add_account; read -p "  Press Enter..." ;;
                 6) restart_proxy; read -p "  Press Enter..." ;;
                 7) test_accounts; read -p "  Press Enter..." ;;
                 8) switch_model; read -p "  Press Enter..." ;;
